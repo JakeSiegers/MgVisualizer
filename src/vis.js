@@ -1,98 +1,37 @@
 /*
 	Jake's MG Visualizer 2018 - MIT license.
 */
+let beatSource;
+let beatAnalyser;
+let beatBufferLength;
 
-var beatSource;
-var beatAnalyser;
-var beatBufferLength;
+let audioCtx;
+let source;
+let analyser;
+let bufferLength;
+let dataArray;
+let lowPassDataArray;
 
-var audioCtx;
-var source;
-var analyser;
-var bufferLength;
-var dataArray;
-var lowPassDataArray;
-
-var canvas = document.querySelector('.visualizer');
-var canvasCtx = canvas.getContext("2d");
+let canvas = document.querySelector('.visualizer');
+let canvasCtx = canvas.getContext("2d");
 canvasCtx.fillStyle = 'rgb(0, 0, 0)';
 canvasCtx.fillRect(0, 0, canvas.width,  canvas.height);
 
-var overlayCanvas = document.querySelector('.overlay');
-var overlayCanvasCtx = overlayCanvas.getContext("2d");
+let overlayCanvas = document.querySelector('.overlay');
+let overlayCanvasCtx = overlayCanvas.getContext("2d");
 overlayCanvasCtx.fillStyle = 'rgb(0, 0, 0)';
 overlayCanvasCtx.fillRect(0, 0, overlayCanvas.width,  overlayCanvas.height);
 
-let mouseX = overlayCanvas.width/2;
-let mouseY = overlayCanvas.height/2;
+let logoRotation = Math.PI;
+let beatValSmoothed = 0;
+let logoRotationTween = new JakeTween(logoRotation,Math.PI,2000);
+let beatValTween = new JakeTween(beatValSmoothed,0,100);
 
-document.addEventListener('mousemove', function(evt) {
-	let rect = overlayCanvas.getBoundingClientRect();
-	mouseX = evt.clientX - rect.left;
-	mouseY = evt.clientY - rect.top;
-}, false);
-
-class PathDrawer{
-	constructor(ctx,points){
-		this.ctx = ctx;
-		this.points = points;
-		let minX = Number.MAX_VALUE;
-		let maxX = Number.MIN_VALUE;
-		let minY = Number.MAX_VALUE;
-		let maxY = Number.MIN_VALUE;
-		for(let i in this.points){
-			if(this.points[i].x < minX){
-				minX = this.points[i].x
-			}
-			if(this.points[i].x > maxX){
-				maxX = this.points[i].x
-			}
-			if(this.points[i].y < minY){
-				minY = this.points[i].y
-			}
-			if(this.points[i].y > maxY){
-				maxY = this.points[i].y
-			}
-		}
-		this.fromCenter = [];
-		this.realCenter = {x:Math.floor((maxX+minX)/2),y:Math.floor((maxY+minY)/2)};
-		console.log(this.realCenter);
-		for(let i in this.points){
-			this.fromCenter.push({
-				x: Math.floor(this.realCenter.x - this.points[i].x),
-				y: Math.floor(this.realCenter.y - this.points[i].y)
-			});
-		}
-		console.log(this.fromCenter);
-	}
-
-	draw(drawX,drawY,scale,color,angle,fill){
-		this.ctx.beginPath();
-		for(let i in this.points){
-			let x = this.fromCenter[i].x*scale;
-			let y = this.fromCenter[i].y*scale;
-			let rx = drawX+(Math.cos(angle) * x) - (Math.sin(angle) * y);
-			let ry = drawY+(Math.cos(angle) * y) + (Math.sin(angle) * x);
-			//console.log(rx);
-			if(i === 0){
-				this.ctx.moveTo(rx,ry);
-			}else{
-				this.ctx.lineTo(rx,ry);
-			}
-		}
-		if(fill){
-			this.ctx.fillStyle = color;
-			this.ctx.fill();
-		}else{
-			this.ctx.strokeStyle = color;
-			this.ctx.lineWidth=20;
-			this.ctx.stroke();
-		}
-	}
-}
+let fist = new Image();
+fist.src = 'fist.png';
 
 let points = [
-	{x:683,y:287.8},
+	{x:678,y:290.8},
 	{x:728.1,y:256.2},
 	{x:742.3,y:309.4},
 	{x:797.1,y:314.2},
@@ -110,29 +49,27 @@ let points = [
 	{x:568.9,y:314.2},
 	{x:623.7,y:309.4},
 	{x:637.9,y:256.2},
-	{x:683,y:287.8}
+	{x:688,y:290.8}
 ];
 
-let mgBorder = new PathDrawer(canvasCtx,points);
-let mgBorder2 = new PathDrawer(overlayCanvasCtx,points);
+let mgBorder = new PathDrawer(points);
 
+let alreadyDrawing = false;
 
-var alreadyDrawing = false;
-
-var stats = new Stats();
-//document.body.appendChild( stats.dom );
+let stats = new Stats();
+document.body.appendChild( stats.dom );
 
 audioCtx = new window.AudioContext();
 
-var musicQueue = [];
-var currentSong = 0;
-var loadingSong = false;
+let musicQueue = [];
+let currentSong = 0;
+let loadingSong = false;
 
-var startedAt = 0;
-var pausedAt = 0;
-var paused = false;
-var buffer = null;
-var flowIn = false;
+let startedAt = 0;
+let pausedAt = 0;
+let paused = false;
+let buffer = null;
+let flowIn = false;
 
 audio_file.onchange = function() {
 	document.getElementById('infoBox').style.display = 'none';
@@ -153,16 +90,24 @@ document.onkeypress = function(event){
 			canvasCtx.fillRect(0,0,canvas.width,canvas.height);
 			flowIn = !flowIn;
 			break;
+		case 'c':
+			currentColor = 0;
+			if(colors === mgColor){
+				colors = rainColor;
+			}else{
+				colors = mgColor;
+			}
+			break;
 	}
 };
 
-var tickerTimer = null;
-var tickerDirectionLeft = true;
+let tickerTimer = null;
+let tickerDirectionLeft = true;
 
 function toggleTicker(){
-	var tickerText = document.getElementById('tickerText');
-	var tickerWrap = document.getElementById('tickerWrap');
-	var difference = tickerText.offsetWidth - tickerWrap.offsetWidth;
+	let tickerText = document.getElementById('tickerText');
+	let tickerWrap = document.getElementById('tickerWrap');
+	let difference = tickerText.offsetWidth - tickerWrap.offsetWidth;
 	//console.log(tickerText.offsetWidth,tickerWrap.offsetWidth);
 	//console.log(difference);
 	if(difference <= 0){
@@ -182,10 +127,10 @@ function toggleTicker(){
 
 function loadSong(file){
 	loadingSong = true;
-	var tickerText = document.getElementById('tickerText');
-	var tickerWrap = document.getElementById('tickerWrap');
-	//var tickerPrefix = document.getElementById('tickerPrefix');
-	var dot = file.name.lastIndexOf('.');
+	let tickerText = document.getElementById('tickerText');
+	let tickerWrap = document.getElementById('tickerWrap');
+	//let tickerPrefix = document.getElementById('tickerPrefix');
+	let dot = file.name.lastIndexOf('.');
 	if(dot !== -1){
 		tickerText.innerHTML = file.name.substring(0,dot);
 	}else{
@@ -197,13 +142,13 @@ function loadSong(file){
 	}
 	tickerText.style.left = '0px';
 	//tickerTimer = setTimeout(toggleTicker,1000);
-	toggleTicker();
+	//toggleTicker();
 
 	stop();
 	document.getElementById('text').style.opacity = 0;//0.6;
 	tickerWrap.style.opacity = 0;//0.6;
 	//tickerPrefix.style.opacity = 0.6;
-	var reader = new FileReader();
+	let reader = new FileReader();
 	reader.onload = function() {
 		audioCtx.decodeAudioData(reader.result, function(newBuffer){
 			buffer = newBuffer;
@@ -215,13 +160,13 @@ function loadSong(file){
 
 function play(){
 
-	var offset = pausedAt;
+	let offset = pausedAt;
 
 	//beatContext = new window.AudioContext();
 	beatSource = audioCtx.createBufferSource();
 	beatSource.buffer = buffer;
 	beatSource.loop = false;
-	var filter = audioCtx.createBiquadFilter();
+	let filter = audioCtx.createBiquadFilter();
 	filter.type = "lowpass";
 	beatSource.connect(filter);
 	//filter.connect(beatContext.destination);
@@ -275,7 +220,7 @@ function pause(){
 		requestAnimationFrame(draw);
 		return;
 	}
-	var elapsed = audioCtx.currentTime - startedAt;
+	let elapsed = audioCtx.currentTime - startedAt;
 	stop();
 	pausedAt = elapsed;
 	paused = true;
@@ -295,12 +240,16 @@ function stop(){
 	startedAt = 0;
 }
 
-var piCounter = 0;
+let piCounter = 0;
 
-var beatValSmoothed = 1;
 
-var colors = [
-	/*
+let mgColor = [
+	{r:255,g:0,b:0},
+	{r:255,g:255,b:0},
+	{r:255,g:255,b:255}
+];
+
+let rainColor = [
 	{r:244,g:67,b:54}, //red
 	{r:255,g:87,b:34}, //deep orange
 	{r:255,g:152,b:0}, // orange
@@ -313,19 +262,16 @@ var colors = [
 	{r:63,g:81,b:181}, //Indigo
 	{r:103,g:58,b:183}, //Deep Purple
 	{r:156,g:39,b:176} //Purple
-	*/
-	{r:255,g:255,b:255},
-	{r:255,g:0,b:0},
-	{r:255,g:255,b:255},
-	{r:255,g:255,b:0},
-	{r:255,g:255,b:255}
 ];
-var currentColor = 0;
 
-let rot = 0;
+let colors = mgColor;
+let currentColor = 0;
+
 let rotD = 1;
+let lastBeatVals = [];
+let beatPeak = 1;
 
-function draw() {
+function draw(time) {
 	if(paused){
 		return;
 	}
@@ -344,94 +290,76 @@ function draw() {
 		piCounter=0;
 	}
 
-	var beatVal = Math.abs(lowPassDataArray[0]-128)/64;
-
-	if(beatVal > 1){
+	let beatVal = Math.abs(lowPassDataArray[0]-128)/64;
+	if(beatVal >= beatPeak && !lastBeatVals.includes(beatPeak)){
 		rotD *= -1;
-		beatVal = 1;
+		logoRotationTween.updateTo(logoRotation,Math.PI*rotD);
+		beatVal = beatPeak;
 		currentColor++;
 		if(currentColor === colors.length){
 			currentColor = 0;
 		}
 	}
+	lastBeatVals.push(beatVal);
+	if(lastBeatVals.length > 1){
+		lastBeatVals.shift();
+	}
 
-	beatValSmoothed = smoothMove(beatValSmoothed,beatVal);
+	beatValSmoothed = beatValTween.getValue();
+	beatValTween.updateTo(beatValSmoothed,beatVal);
+	logoRotation = logoRotationTween.getValue();
 
+	let r = Math.floor((colors[currentColor].r)*beatValSmoothed);
+	let g = Math.floor((colors[currentColor].g)*beatValSmoothed);
+	let b = Math.floor((colors[currentColor].b)*beatValSmoothed);
 
+	let rgb = 'rgb('+r+','+g+','+b+')';
 
-	var r = Math.floor((colors[currentColor].r)*beatVal);
-	var g = Math.floor((colors[currentColor].g)*beatVal);
-	var b = Math.floor((colors[currentColor].b)*beatVal);
-
-	var rgb = 'rgb('+r+','+g+','+b+')';
-
-	//drawCircle(rgb,dataArray);
+	drawCircle(rgb,dataArray);
 
 	canvasCtx.fillStyle = '#ffffff';
-
-	//console.log(rotD);
-	rot += 0.02 * rotD;
-	if(rot > Math.PI*2){
-		rot = 0;
-	}
 
 	let logoX = canvas.width/2;//Math.sin(rot)*200+canvas.height/2;
 	let logoY = canvas.height/2;//Math.sin(rot)*200+canvas.height/2;
 
+	mgBorder.draw(canvasCtx,logoX,logoY,beatValSmoothed+1,rgb,logoRotation,false);
 
-	mgBorder.draw(logoX,logoY,beatValSmoothed+1,rgb,rot,false);
-
-	var fadeSpeed = Math.abs(beatValSmoothed)*30+1;
+	let fadeSpeed = Math.abs(beatValSmoothed)*30+5;
 	//fadeSpeed = 15;
 	if(flowIn){
 		canvasCtx.drawImage(canvasCtx.canvas, 0, 0, canvas.width, canvas.height, fadeSpeed, fadeSpeed, canvas.width - fadeSpeed*2, canvas.height - fadeSpeed*2);
 	}else{
 		canvasCtx.drawImage(canvasCtx.canvas, 0, 0, canvas.width, canvas.height, -fadeSpeed, -fadeSpeed, canvas.width + fadeSpeed*2, canvas.height + fadeSpeed*2);
 	}
-	//Draw this on a separate canvas??? oooh, yes I like that.
-	mgBorder2.draw(logoX,logoY,beatValSmoothed+1,'rgb(0,0,0)',rot,true);
-	mgBorder2.draw(logoX,logoY,beatValSmoothed+1,'rgb(255,255,255)',rot,false);
+	mgBorder.draw(overlayCanvasCtx,logoX,logoY,beatValSmoothed+1,'rgb(0,0,0)',logoRotation,true);
+	mgBorder.draw(overlayCanvasCtx,logoX,logoY,beatValSmoothed+1,'rgb(255,255,255)',logoRotation,false);
 
-
-	document.getElementById('logo').style.transform = "translate(-50%, -50%) scale("+(beatValSmoothed+1)+","+(beatValSmoothed+1)+")";
-	document.getElementById('logo').style.opacity = 1;//0.2+beatValSmoothed;
-
-	stats.end();
+	let logoWidth = 150*(beatValSmoothed+1) //- (198*beatValSmoothed+(198/2));
+	let logoHeight = 140*(beatValSmoothed+1) //- (193*beatValSmoothed+(193/2));
+	overlayCanvasCtx.drawImage(fist,canvas.width/2-logoWidth/2,canvas.height/2-logoHeight/2,logoWidth,logoHeight);
 
 	requestAnimationFrame(draw);
-}
-
-function smoothMove(from,to){
-	var temp;
-	if(from<to)
-		temp=(from+(0.1*Math.abs(from-to)));
-	else
-		temp=(from-(0.1*Math.abs(from-to)));
-	return temp;
+	stats.end();
 }
 
 function drawCircle(color,data){
 	canvasCtx.strokeStyle = color;
 	canvasCtx.lineWidth = 8;
 	canvasCtx.beginPath();
-	var circleRadius = 150;
-	for(var i = 0; i < bufferLength; i++) {
-		var spike = data[i] -128;
-		var x = canvas.width/2 + Math.cos((Math.PI*2)*(i/bufferLength)+(Math.PI/2))*(circleRadius+spike);
-		var y = canvas.height/2 + Math.sin((Math.PI*2)*(i/bufferLength)+(Math.PI/2))*(circleRadius+spike);
+	let circleRadius = 130;
+	for(let i = 0; i < bufferLength; i++) {
+		let spike = data[i] -128;
+		let x = canvas.width/2 + Math.cos((Math.PI*2)*(i/bufferLength)+(Math.PI/2))*(circleRadius+spike);
+		let y = canvas.height/2 + Math.sin((Math.PI*2)*(i/bufferLength)+(Math.PI/2))*(circleRadius+spike);
 		if(i === 0) {
 			canvasCtx.moveTo(x, y);
 		} else {
 			canvasCtx.lineTo(x, y);
 		}
 	}
-	var firstSpike =  (data[0] -128);
-	var lastX = canvas.width/2 + Math.cos(0+(Math.PI/2))*(circleRadius+firstSpike);
-	var lastY = canvas.height/2 + Math.sin(0+(Math.PI/2))*(circleRadius+firstSpike);
+	let firstSpike =  (data[0] -128);
+	let lastX = canvas.width/2 + Math.cos(Math.PI/2)*(circleRadius+firstSpike);
+	let lastY = canvas.height/2 + Math.sin(Math.PI/2)*(circleRadius+firstSpike);
 	canvasCtx.lineTo(lastX, lastY);
 	canvasCtx.stroke();
-}
-
-function drawCenteredSquare(ctx,x,y,width,height){
-	ctx.rect(x-width/2,y-height/2,width,height)
 }
