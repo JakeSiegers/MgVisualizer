@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<title>Jake's Web Audio Visualizer</title>
+		<link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
+		<link rel=stylesheet type="text/css" href="css/style.css">
+		<link rel="stylesheet" href="css/mobile.css">
+	</head>
+	<body>
+		<div class="wrap">
+			<img class="logo" id="logo" src="fist.png" height="293" width="298"/>
+			<div class="text" id="text">
+				MG @ Smash Con 2018
+			</div>
+			<!--<div class="tickerPrefix" id="tickerPrefix">Now Playing:</div>-->
+			<div class="tickerWrap" id="tickerWrap">
+				<div class="tickerText" id="tickerText">
+
+				</div>
+			</div>
+		</div>
+		<div class="infoBox" id="infoBox">
+			Load Music Files For Visualizer (Multi-Select Supported)<br />
+			<input id="audio_file" type="file" accept="audio/*" multiple>
+		</div>
+
+		<canvas class="visualizer" width="1280" height="1280" ></canvas>
+		<canvas class="overlay" width="1280" height="1280" ></canvas>
+		<script type="text/javascript" src="js/stats.js"></script>
+		<script type="text/javascript" src="js/vis.js"></script>
+	</body>
+</html>
