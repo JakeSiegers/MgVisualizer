@@ -27,6 +27,8 @@ let beatValSmoothed = 0;
 let logoRotationTween = new JakeTween(logoRotation,Math.PI,2000);
 let beatValTween = new JakeTween(beatValSmoothed,0,100);
 
+let ticker = new Ticker(overlayCanvas);
+
 let fist = new Image();
 fist.src = 'fist.png';
 
@@ -52,7 +54,14 @@ let points = [
 	{x:688,y:290.8}
 ];
 
-let mgBorder = new PathDrawer(points);
+let mgBorder = new PathDrawer({
+	points:points,
+	ctx:overlayCanvasCtx
+});
+let mgBgBorder = new PathDrawer({
+	points:points,
+	ctx:canvasCtx
+});
 
 let alreadyDrawing = false;
 
@@ -70,6 +79,7 @@ let pausedAt = 0;
 let paused = false;
 let buffer = null;
 let flowIn = false;
+
 
 audio_file.onchange = function() {
 	document.getElementById('infoBox').style.display = 'none';
@@ -101,53 +111,17 @@ document.onkeypress = function(event){
 	}
 };
 
-let tickerTimer = null;
-let tickerDirectionLeft = true;
-
-function toggleTicker(){
-	let tickerText = document.getElementById('tickerText');
-	let tickerWrap = document.getElementById('tickerWrap');
-	let difference = tickerText.offsetWidth - tickerWrap.offsetWidth;
-	//console.log(tickerText.offsetWidth,tickerWrap.offsetWidth);
-	//console.log(difference);
-	if(difference <= 0){
-		tickerText.style.left = (-difference/2)+'px';
-		tickerTimer = setTimeout(toggleTicker,10000);
-		return;
-	}
-
-	if(tickerDirectionLeft){
-		tickerText.style.left = -(difference+10)+'px';
-	}else{
-		tickerText.style.left = '10px';
-	}
-	tickerDirectionLeft = !tickerDirectionLeft;
-	tickerTimer = setTimeout(toggleTicker,10000);
-}
-
 function loadSong(file){
 	loadingSong = true;
-	let tickerText = document.getElementById('tickerText');
-	let tickerWrap = document.getElementById('tickerWrap');
-	//let tickerPrefix = document.getElementById('tickerPrefix');
+
 	let dot = file.name.lastIndexOf('.');
 	if(dot !== -1){
-		tickerText.innerHTML = file.name.substring(0,dot);
+		ticker.setSong(file.name.substring(0,dot));
 	}else{
-		tickerText.innerHTML = file.name;
+		ticker.setSong(file.name);
 	}
-
-	if(tickerTimer !== null){
-		clearTimeout(tickerTimer);
-	}
-	tickerText.style.left = '0px';
-	//tickerTimer = setTimeout(toggleTicker,1000);
-	//toggleTicker();
 
 	stop();
-	document.getElementById('text').style.opacity = 0;//0.6;
-	tickerWrap.style.opacity = 0;//0.6;
-	//tickerPrefix.style.opacity = 0.6;
 	let reader = new FileReader();
 	reader.onload = function() {
 		audioCtx.decodeAudioData(reader.result, function(newBuffer){
@@ -322,7 +296,14 @@ function draw(time) {
 	let logoX = canvas.width/2;//Math.sin(rot)*200+canvas.height/2;
 	let logoY = canvas.height/2;//Math.sin(rot)*200+canvas.height/2;
 
-	mgBorder.draw(canvasCtx,logoX,logoY,beatValSmoothed+1,rgb,logoRotation,false);
+	mgBgBorder.setConfigs({
+		drawX:logoX,
+		drawY:logoY,
+		scale:beatValSmoothed+1,
+		color:rgb,
+		angle:logoRotation,
+		fill:false
+	}).draw();
 
 	let fadeSpeed = Math.abs(beatValSmoothed)*30+5;
 	//fadeSpeed = 15;
@@ -331,12 +312,25 @@ function draw(time) {
 	}else{
 		canvasCtx.drawImage(canvasCtx.canvas, 0, 0, canvas.width, canvas.height, -fadeSpeed, -fadeSpeed, canvas.width + fadeSpeed*2, canvas.height + fadeSpeed*2);
 	}
-	mgBorder.draw(overlayCanvasCtx,logoX,logoY,beatValSmoothed+1,'rgb(0,0,0)',logoRotation,true);
-	mgBorder.draw(overlayCanvasCtx,logoX,logoY,beatValSmoothed+1,'rgb(255,255,255)',logoRotation,false);
+
+	mgBorder.setConfigs({
+		drawX:logoX,
+		drawY:logoY,
+		scale:beatValSmoothed+1,
+		color:'rgb(0,0,0)',
+		angle:logoRotation,
+		fill:true
+	}).draw();
+	mgBorder.setConfigs({
+		color:'rgb(255,255,255)',
+		fill:false
+	}).draw();
 
 	let logoWidth = 150*(beatValSmoothed+1) //- (198*beatValSmoothed+(198/2));
 	let logoHeight = 140*(beatValSmoothed+1) //- (193*beatValSmoothed+(193/2));
 	overlayCanvasCtx.drawImage(fist,canvas.width/2-logoWidth/2,canvas.height/2-logoHeight/2,logoWidth,logoHeight);
+
+	ticker.draw();
 
 	requestAnimationFrame(draw);
 	stats.end();
