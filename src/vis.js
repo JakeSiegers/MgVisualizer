@@ -24,8 +24,18 @@ overlayCanvasCtx.fillRect(0, 0, overlayCanvas.width,  overlayCanvas.height);
 
 let logoRotation = Math.PI;
 let beatValSmoothed = 0;
-let logoRotationTween = new JakeTween(logoRotation,Math.PI,2000);
-let beatValTween = new JakeTween(beatValSmoothed,0,100);
+let logoRotationTween = new JakeTween({
+	from:logoRotation,
+	to:Math.PI,
+	animTime:2000,
+	easeFn:JakeTween.easing.quadratic.out
+}).start();
+let beatValTween = new JakeTween({
+	from:beatValSmoothed,
+	to:0,
+	animTime:50,
+	easeFn:JakeTween.easing.linear
+}).start();
 
 let ticker = new Ticker(overlayCanvas);
 
@@ -66,7 +76,7 @@ let mgBgBorder = new PathDrawer({
 let alreadyDrawing = false;
 
 let stats = new Stats();
-document.body.appendChild( stats.dom );
+//document.body.appendChild( stats.dom );
 
 audioCtx = new window.AudioContext();
 
@@ -127,6 +137,7 @@ function loadSong(file){
 		audioCtx.decodeAudioData(reader.result, function(newBuffer){
 			buffer = newBuffer;
 			play();
+			ticker.show();
 		});
 	};
 	reader.readAsArrayBuffer(file);
@@ -280,6 +291,8 @@ function draw(time) {
 	}
 
 	beatValSmoothed = beatValTween.getValue();
+	//Tone this down a bit for the logo bouncing.
+	let logoBeatValSmoothed = beatValSmoothed/3;
 	beatValTween.updateTo(beatValSmoothed,beatVal);
 	logoRotation = logoRotationTween.getValue();
 
@@ -289,7 +302,7 @@ function draw(time) {
 
 	let rgb = 'rgb('+r+','+g+','+b+')';
 
-	drawCircle(rgb,dataArray);
+	//drawCircle(rgb,dataArray);
 
 	canvasCtx.fillStyle = '#ffffff';
 
@@ -299,7 +312,7 @@ function draw(time) {
 	mgBgBorder.setConfigs({
 		drawX:logoX,
 		drawY:logoY,
-		scale:beatValSmoothed+1,
+		scale:logoBeatValSmoothed+1,
 		color:rgb,
 		angle:logoRotation,
 		fill:false
@@ -316,7 +329,7 @@ function draw(time) {
 	mgBorder.setConfigs({
 		drawX:logoX,
 		drawY:logoY,
-		scale:beatValSmoothed+1,
+		scale:logoBeatValSmoothed+1,
 		color:'rgb(0,0,0)',
 		angle:logoRotation,
 		fill:true
@@ -326,8 +339,8 @@ function draw(time) {
 		fill:false
 	}).draw();
 
-	let logoWidth = 150*(beatValSmoothed+1) //- (198*beatValSmoothed+(198/2));
-	let logoHeight = 140*(beatValSmoothed+1) //- (193*beatValSmoothed+(193/2));
+	let logoWidth = 150*(logoBeatValSmoothed+1);
+	let logoHeight = 140*(logoBeatValSmoothed+1);
 	overlayCanvasCtx.drawImage(fist,canvas.width/2-logoWidth/2,canvas.height/2-logoHeight/2,logoWidth,logoHeight);
 
 	ticker.draw();
@@ -340,7 +353,7 @@ function drawCircle(color,data){
 	canvasCtx.strokeStyle = color;
 	canvasCtx.lineWidth = 8;
 	canvasCtx.beginPath();
-	let circleRadius = 130;
+	let circleRadius = 110;
 	for(let i = 0; i < bufferLength; i++) {
 		let spike = data[i] -128;
 		let x = canvas.width/2 + Math.cos((Math.PI*2)*(i/bufferLength)+(Math.PI/2))*(circleRadius+spike);
