@@ -64,7 +64,7 @@ class Ticker{
 		this.ctx.textAlign = 'left';
 		this.ctx.textBaseline="middle";
 		//this.ctx.globalCompositeOperation = "destination-out";
-		let text = 'McleodGaming @ Smash Con 2018 - Song Name: '+this.song+'   ';
+		let text = 'McLeodGaming @ Smash Con 2018 - Song Name: '+this.song+'   ';
 
 		this.ctx.fillText(text + text, this.canvas.width/2-265-(this.ctx.measureText(text).width*scrollDistance),this.canvas.height/2+225);
 		//this.ctx.font = '20px Arial';
