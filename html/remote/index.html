@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Remote</title>
+</head>
+<body>
+    <script src="../js/SocketHelper.js" ></script>
+    <script>
+        class Remote{
+            constructor(){
+                this.sock = new SocketHelper({
+                    url:document.location.host+'/webSocket?user=remote',
+	                onConnect:this.connected,
+	                scope:this
+                });
+                this.sock.connect();
+            }
+            connected(){
+	            this.sock.send({to:'overlay',action:'play',value:'songName'});
+            }
+        }
+        let r = new Remote();
+    </script>
+</body>
+</html>

@@ -14,13 +14,13 @@ let lowPassDataArray;
 
 let canvas = document.querySelector('.visualizer');
 let canvasCtx = canvas.getContext("2d");
-canvasCtx.fillStyle = 'rgb(0, 0, 0)';
-canvasCtx.fillRect(0, 0, canvas.width,  canvas.height);
+//canvasCtx.fillStyle = 'rgb(0, 0, 0)';
+//canvasCtx.fillRect(0, 0, canvas.width,  canvas.height);
 
 let overlayCanvas = document.querySelector('.overlay');
 let overlayCanvasCtx = overlayCanvas.getContext("2d");
-overlayCanvasCtx.fillStyle = 'rgb(0, 0, 0)';
-overlayCanvasCtx.fillRect(0, 0, overlayCanvas.width,  overlayCanvas.height);
+//overlayCanvasCtx.fillStyle = 'rgb(0, 0, 0)';
+//overlayCanvasCtx.fillRect(0, 0, overlayCanvas.width,  overlayCanvas.height);
 
 let logoRotation = Math.PI;
 let beatValSmoothed = 0;
