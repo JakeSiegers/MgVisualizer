@@ -1,372 +1,377 @@
 /*
 	Jake's MG Visualizer 2018 - MIT license.
 */
-let beatSource;
-let beatAnalyser;
-let beatBufferLength;
 
-let audioCtx;
-let source;
-let analyser;
-let bufferLength;
-let dataArray;
-let lowPassDataArray;
+class MgVisualizer{
+	constructor(){
+		this.audioCtx = null;
 
-let canvas = document.querySelector('.visualizer');
-let canvasCtx = canvas.getContext("2d");
-//canvasCtx.fillStyle = 'rgb(0, 0, 0)';
-//canvasCtx.fillRect(0, 0, canvas.width,  canvas.height);
+		this.musicSource = null;
+		this.musicAnalyser = null;
 
-let overlayCanvas = document.querySelector('.overlay');
-let overlayCanvasCtx = overlayCanvas.getContext("2d");
-//overlayCanvasCtx.fillStyle = 'rgb(0, 0, 0)';
-//overlayCanvasCtx.fillRect(0, 0, overlayCanvas.width,  overlayCanvas.height);
+		this.beatSource = null;
+		this.beatAnalyser = null;
 
-let logoRotation = Math.PI;
-let beatValSmoothed = 0;
-let logoRotationTween = new JakeTween({
-	from:logoRotation,
-	to:Math.PI,
-	animTime:2000,
-	easeFn:JakeTween.easing.quadratic.out
-}).start();
-let beatValTween = new JakeTween({
-	from:beatValSmoothed,
-	to:0,
-	animTime:50,
-	easeFn:JakeTween.easing.linear
-}).start();
+		this.currentBuffer = null;
+		this.bufferLength = null;
+		this.dataArray = null;
+		this.lowPassDataArray = null;
 
-let ticker = new Ticker(overlayCanvas);
+		this.canvas = document.querySelector('.visualizer');
+		this.canvasCtx = this.canvas.getContext("2d");
+		//this.canvasCtx.fillStyle = 'rgb(0, 0, 0)';
+		//this.canvasCtx.fillRect(0, 0, this.canvas.width,  this.canvas.height);
 
-let fist = new Image();
-fist.src = 'fist.png';
+		this.overlayCanvas = document.querySelector('.overlay');
+		this.overlayCtx = this.overlayCanvas.getContext("2d");
+		//this.overlayCtx.fillStyle = 'rgb(0, 0, 0)';
+		//this.overlayCtx.fillRect(0, 0, this.overlayCanvas.width,  this.overlayCanvas.height);
 
-let points = [
-	{x:678,y:290.8},
-	{x:728.1,y:256.2},
-	{x:742.3,y:309.4},
-	{x:797.1,y:314.2},
-	{x:773.8,y:364},
-	{x:812.7,y:402.9},
-	{x:762.9,y:426.1},
-	{x:767.7,y:480.9},
-	{x:714.5,y:466.7},
-	{x:683,y:511.8},
-	{x:651.5,y:466.7},
-	{x:598.3,y:480.9},
-	{x:603.1,y:426.1},
-	{x:553.3,y:402.9},
-	{x:592.2,y:364},
-	{x:568.9,y:314.2},
-	{x:623.7,y:309.4},
-	{x:637.9,y:256.2},
-	{x:688,y:290.8}
-];
+		this.ticker = new Ticker(this.overlayCanvas);
+		this.fist = new Image();
+		this.fist.src = 'img/fist.png';
 
-let mgBorder = new PathDrawer({
-	points:points,
-	ctx:overlayCanvasCtx
-});
-let mgBgBorder = new PathDrawer({
-	points:points,
-	ctx:canvasCtx
-});
+		let points = [
+			{x:678,y:290.8},
+			{x:728.1,y:256.2},
+			{x:742.3,y:309.4},
+			{x:797.1,y:314.2},
+			{x:773.8,y:364},
+			{x:812.7,y:402.9},
+			{x:762.9,y:426.1},
+			{x:767.7,y:480.9},
+			{x:714.5,y:466.7},
+			{x:683,y:511.8},
+			{x:651.5,y:466.7},
+			{x:598.3,y:480.9},
+			{x:603.1,y:426.1},
+			{x:553.3,y:402.9},
+			{x:592.2,y:364},
+			{x:568.9,y:314.2},
+			{x:623.7,y:309.4},
+			{x:637.9,y:256.2},
+			{x:688,y:290.8}
+		];
 
-let alreadyDrawing = false;
-
-let stats = new Stats();
-//document.body.appendChild( stats.dom );
-
-audioCtx = new window.AudioContext();
-
-let musicQueue = [];
-let currentSong = 0;
-let loadingSong = false;
-
-let startedAt = 0;
-let pausedAt = 0;
-let paused = false;
-let buffer = null;
-let flowIn = false;
-
-
-audio_file.onchange = function() {
-	document.getElementById('infoBox').style.display = 'none';
-	if(this.files.length > 0){
-		musicQueue = this.files;
-		currentSong = 0;
-		loadSong(musicQueue[0]);
-	}
-};
-
-document.onkeypress = function(event){
-	switch(event.key){
-		case 'p':
-			pause();
-			break;
-		case 'f':
-			canvasCtx.fillStyle = 'rgba(0, 0, 0, 1)';
-			canvasCtx.fillRect(0,0,canvas.width,canvas.height);
-			flowIn = !flowIn;
-			break;
-		case 'c':
-			currentColor = 0;
-			if(colors === mgColor){
-				colors = rainColor;
-			}else{
-				colors = mgColor;
-			}
-			break;
-	}
-};
-
-function loadSong(file){
-	loadingSong = true;
-
-	let dot = file.name.lastIndexOf('.');
-	if(dot !== -1){
-		ticker.setSong(file.name.substring(0,dot));
-	}else{
-		ticker.setSong(file.name);
-	}
-
-	stop();
-	let reader = new FileReader();
-	reader.onload = function() {
-		audioCtx.decodeAudioData(reader.result, function(newBuffer){
-			buffer = newBuffer;
-			play();
-			ticker.show();
+		this.mgBorder = new PathDrawer({
+			points:points,
+			ctx:this.overlayCtx
 		});
+		this.mgBgBorder = new PathDrawer({
+			points:points,
+			ctx:this.canvasCtx
+		});
+
+		this.alreadyDrawing = false;
+
+		this.stats = new Stats();
+		document.body.appendChild( this.stats.dom );
+
+		this.audioCtx = new window.AudioContext();
+
+		this.musicQueue = [];
+		this.currentSong = 0;
+		this.loadingSong = false;
+
+		this.startTime = 0;
+		this.pauseTime = 0;
+		this.paused = false;
+		this.flowIn = false;
+
+		this.mgColors = [
+			{r:255,g:0,b:0},
+			{r:255,g:255,b:0},
+			{r:255,g:255,b:255}
+		];
+
+		this.rainbowColors = [
+			{r:244,g:67,b:54}, //red
+			{r:255,g:87,b:34}, //deep orange
+			{r:255,g:152,b:0}, // orange
+			{r:155,g:193,b:7}, //amber
+			{r:255,g:255,b:59}, //yellow
+			{r:139,g:195,b:74}, //light green
+			{r:76,g:175,b:80}, //green
+			{r:0,g:150,b:136}, //teal
+			{r:33,g:150,b:243}, //Blue
+			{r:63,g:81,b:181}, //Indigo
+			{r:103,g:58,b:183}, //Deep Purple
+			{r:156,g:39,b:176} //Purple
+		];
+
+		this.colors = this.mgColors;
+		this.currentColor = 0;
+
+		this.logoRotateDirection = 1;
+		this.recentBeatPeaks = [];
+		this.beatPeakCap = 1;
+
+		let audioDom = document.getElementById('audio_file');
+		audioDom.onchange = this.audioFileChange.bind(this);
+
+		document.onkeypress = this.keypress.bind(this);
+
+		this.logoRotation = Math.PI;
+		this.beatValSmoothed = 0;
+		this.logoRotationTween = new JakeTween({
+			from:this.logoRotation,
+			to:Math.PI,
+			animTime:2000,
+			easeFn:JakeTween.easing.quadratic.out
+		}).start();
+		this.beatValTween = new JakeTween({
+			from:this.beatValSmoothed,
+			to:0,
+			animTime:50,
+			easeFn:JakeTween.easing.linear
+		}).start();
+	}
+
+	audioFileChange(event){
+		console.log(arguments);
+		document.getElementById('infoBox').style.display = 'none';
+		if(event.srcElement.files.length > 0){
+			this.musicQueue = event.srcElement.files;
+			this.currentSong = 0;
+			this.loadSong(this.musicQueue[0]);
+		}
+	}
+
+	keypress(event){
+		switch(event.key){
+			case 'p':
+				this.pause();
+				break;
+			case 'f':
+				this.canvasCtx.fillStyle = 'rgba(0, 0, 0, 1)';
+				this.canvasCtx.fillRect(0,0,this.canvas.width,this.canvas.height);
+				this.flowIn = !this.flowIn;
+				break;
+			case 'c':
+				this.currentColor = 0;
+				if(this.colors === this.mgColors){
+					this.colors = this.rainbowColors;
+				}else{
+					this.colors = this.mgColors;
+				}
+				break;
+		}
 	};
-	reader.readAsArrayBuffer(file);
-}
 
-function play(){
+	loadSong(file){
+		this.loadingSong = true;
 
-	let offset = pausedAt;
+		let dot = file.name.lastIndexOf('.');
+		if(dot !== -1){
+			this.ticker.setSong(file.name.substring(0,dot));
+		}else{
+			this.ticker.setSong(file.name);
+		}
 
-	//beatContext = new window.AudioContext();
-	beatSource = audioCtx.createBufferSource();
-	beatSource.buffer = buffer;
-	beatSource.loop = false;
-	let filter = audioCtx.createBiquadFilter();
-	filter.type = "lowpass";
-	beatSource.connect(filter);
-	//filter.connect(beatContext.destination);
-	beatAnalyser = audioCtx.createAnalyser();
-	filter.connect(beatAnalyser);
-	beatAnalyser.fftSize = 128; //must be power of 2
-	//beatAnalyser.smoothingTimeConstant = 1;
-	beatBufferLength = beatAnalyser.frequencyBinCount;
-	lowPassDataArray = new Uint8Array(beatBufferLength);
+		this.stop();
+		let reader = new FileReader();
+		reader.onload = function() {
+			this.audioCtx.decodeAudioData(reader.result, function(newBuffer){
+				this.currentBuffer = newBuffer;
+				this.play();
+				this.ticker.show();
+			}.bind(this));
+		}.bind(this);
+		reader.readAsArrayBuffer(file);
+	}
 
-	source = audioCtx.createBufferSource();
-	source.connect(audioCtx.destination);
-	source.buffer = buffer;
-	source.loop = false;
-	analyser = audioCtx.createAnalyser();
-	source.connect(analyser);
-	analyser.fftSize = 128; //must be power of 2
-	analyser.smoothingTimeConstant = 1;
-	bufferLength = analyser.frequencyBinCount;
-	dataArray = new Uint8Array(bufferLength);
+	play(){
 
-	source.start(0,offset);
-	beatSource.start(0,offset);
-	startedAt = audioCtx.currentTime - offset;
-	pausedAt = 0;
-	paused = false;
-	loadingSong = false;
+		let offset = this.pauseTime;
 
-	source.onended = function(){
-		if(loadingSong){
+		//beatContext = new window.AudioContext();
+		this.beatSource = this.audioCtx.createBufferSource();
+		this.beatSource.buffer = this.currentBuffer;
+		this.beatSource.loop = false;
+		let filter = this.audioCtx.createBiquadFilter();
+		filter.type = "lowpass";
+		this.beatSource.connect(filter);
+		//filter.connect(beatContext.destination);
+		this.beatAnalyser = this.audioCtx.createAnalyser();
+		filter.connect(this.beatAnalyser);
+		this.beatAnalyser.fftSize = 128; //must be power of 2
+		//this.beatAnalyser.smoothingTimeConstant = 1;
+		this.lowPassDataArray = new Uint8Array(this.beatAnalyser.frequencyBinCount);
+
+		this.musicSource = this.audioCtx.createBufferSource();
+		this.musicSource.connect(this.audioCtx.destination);
+		this.musicSource.buffer = this.currentBuffer;
+		this.musicSource.loop = false;
+		this.musicAnalyser = this.audioCtx.createAnalyser();
+		this.musicSource.connect(this.musicAnalyser);
+		this.musicAnalyser.fftSize = 128; //must be power of 2
+		this.musicAnalyser.smoothingTimeConstant = 1;
+		this.bufferLength = this.musicAnalyser.frequencyBinCount;
+		this.dataArray = new Uint8Array(this.bufferLength);
+
+		this.musicSource.start(0,offset);
+		this.beatSource.start(0,offset);
+		this.startTime = this.audioCtx.currentTime - offset;
+		this.pauseTime = 0;
+		this.paused = false;
+		this.loadingSong = false;
+
+		this.musicSource.onended = function(){
+			if(this.loadingSong){
+				return;
+			}
+			this.currentSong++;
+			if(this.currentSong >= this.musicQueue.length){
+				//NO Playlist looping for now!
+				//this.currentSong = 0;
+			}else {
+				this.loadSong(this.musicQueue[this.currentSong]);
+			}
+		}.bind(this);
+
+		if(!this.alreadyDrawing){
+			this.alreadyDrawing = true;
+			this.draw();
+		}
+	}
+
+	pause(){
+		if(this.paused){
+			this.play();
+			requestAnimationFrame(this.draw.bind(this));
 			return;
 		}
-		currentSong++;
-		if(currentSong >= musicQueue.length){
-			//NO Playlist looping for now!
-			//currentSong = 0;
-		}else {
-			loadSong(musicQueue[currentSong]);
+		let elapsed = this.audioCtx.currentTime - this.startTime;
+		this.stop();
+		this.pauseTime = elapsed;
+		this.paused = true;
+	}
+
+	stop(){
+		this.paused = false;
+		if(this.musicSource){
+			this.musicSource.disconnect();
+			this.musicSource.stop();
+			this.musicSource = null;
+			this.beatSource.disconnect();
+			this.beatSource.stop();
+			this.beatSource = null;
 		}
-	};
-
-	if(!alreadyDrawing){
-		alreadyDrawing = true;
-		draw();
-	}
-}
-
-function pause(){
-	if(paused){
-		play();
-		requestAnimationFrame(draw);
-		return;
-	}
-	let elapsed = audioCtx.currentTime - startedAt;
-	stop();
-	pausedAt = elapsed;
-	paused = true;
-}
-
-function stop(){
-	paused = false;
-	if(source){
-		source.disconnect();
-		source.stop();
-		source = null;
-		beatSource.disconnect();
-		beatSource.stop();
-		beatSource = null;
-	}
-	pausedAt = 0;
-	startedAt = 0;
-}
-
-let piCounter = 0;
-
-
-let mgColor = [
-	{r:255,g:0,b:0},
-	{r:255,g:255,b:0},
-	{r:255,g:255,b:255}
-];
-
-let rainColor = [
-	{r:244,g:67,b:54}, //red
-	{r:255,g:87,b:34}, //deep orange
-	{r:255,g:152,b:0}, // orange
-	{r:155,g:193,b:7}, //amber
-	{r:255,g:255,b:59}, //yellow
-	{r:139,g:195,b:74}, //light green
-	{r:76,g:175,b:80}, //green
-	{r:0,g:150,b:136}, //teal
-	{r:33,g:150,b:243}, //Blue
-	{r:63,g:81,b:181}, //Indigo
-	{r:103,g:58,b:183}, //Deep Purple
-	{r:156,g:39,b:176} //Purple
-];
-
-let colors = mgColor;
-let currentColor = 0;
-
-let rotD = 1;
-let lastBeatVals = [];
-let beatPeak = 1;
-
-function draw(time) {
-	if(paused){
-		return;
-	}
-	stats.begin();
-
-	analyser.getByteTimeDomainData(dataArray);
-	beatAnalyser.getByteTimeDomainData(lowPassDataArray);
-
-	//canvasCtx.fillStyle = 'rgba(0, 0, 0, 0.03)';
-	//canvasCtx.fillRect(0,0,canvas.width,canvas.height);
-
-	overlayCanvasCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
-
-	piCounter+=0.05;
-	if(piCounter>Math.PI*2){
-		piCounter=0;
+		this.pauseTime = 0;
+		this.startTime = 0;
 	}
 
-	let beatVal = Math.abs(lowPassDataArray[0]-128)/64;
-	if(beatVal >= beatPeak && !lastBeatVals.includes(beatPeak)){
-		rotD *= -1;
-		logoRotationTween.updateTo(logoRotation,Math.PI*rotD);
-		beatVal = beatPeak;
-		currentColor++;
-		if(currentColor === colors.length){
-			currentColor = 0;
+	draw(time) {
+		if(this.paused){
+			return;
 		}
-	}
-	lastBeatVals.push(beatVal);
-	if(lastBeatVals.length > 1){
-		lastBeatVals.shift();
-	}
+		this.stats.begin();
 
-	beatValSmoothed = beatValTween.getValue();
-	//Tone this down a bit for the logo bouncing.
-	let logoBeatValSmoothed = beatValSmoothed/3;
-	beatValTween.updateTo(beatValSmoothed,beatVal);
-	logoRotation = logoRotationTween.getValue();
+		this.musicAnalyser.getByteTimeDomainData(this.dataArray);
+		this.beatAnalyser.getByteTimeDomainData(this.lowPassDataArray);
 
-	let r = Math.floor((colors[currentColor].r)*beatValSmoothed);
-	let g = Math.floor((colors[currentColor].g)*beatValSmoothed);
-	let b = Math.floor((colors[currentColor].b)*beatValSmoothed);
+		//this.canvasCtx.fillStyle = 'rgba(0, 0, 0, 0.03)';
+		//this.canvasCtx.fillRect(0,0,canvas.width,canvas.height);
 
-	let rgb = 'rgb('+r+','+g+','+b+')';
+		this.overlayCtx.clearRect(0, 0, this.overlayCanvas.width, this.overlayCanvas.height);
 
-	//drawCircle(rgb,dataArray);
 
-	canvasCtx.fillStyle = '#ffffff';
-
-	let logoX = canvas.width/2;//Math.sin(rot)*200+canvas.height/2;
-	let logoY = canvas.height/2;//Math.sin(rot)*200+canvas.height/2;
-
-	mgBgBorder.setConfigs({
-		drawX:logoX,
-		drawY:logoY,
-		scale:logoBeatValSmoothed+1,
-		color:rgb,
-		angle:logoRotation,
-		fill:false
-	}).draw();
-
-	let fadeSpeed = Math.abs(beatValSmoothed)*30+5;
-	//fadeSpeed = 15;
-	if(flowIn){
-		canvasCtx.drawImage(canvasCtx.canvas, 0, 0, canvas.width, canvas.height, fadeSpeed, fadeSpeed, canvas.width - fadeSpeed*2, canvas.height - fadeSpeed*2);
-	}else{
-		canvasCtx.drawImage(canvasCtx.canvas, 0, 0, canvas.width, canvas.height, -fadeSpeed, -fadeSpeed, canvas.width + fadeSpeed*2, canvas.height + fadeSpeed*2);
-	}
-
-	mgBorder.setConfigs({
-		drawX:logoX,
-		drawY:logoY,
-		scale:logoBeatValSmoothed+1,
-		color:'rgb(0,0,0)',
-		angle:logoRotation,
-		fill:true
-	}).draw();
-	mgBorder.setConfigs({
-		color:'rgb(255,255,255)',
-		fill:false
-	}).draw();
-
-	let logoWidth = 150*(logoBeatValSmoothed+1);
-	let logoHeight = 140*(logoBeatValSmoothed+1);
-	overlayCanvasCtx.drawImage(fist,canvas.width/2-logoWidth/2,canvas.height/2-logoHeight/2,logoWidth,logoHeight);
-
-	ticker.draw();
-
-	requestAnimationFrame(draw);
-	stats.end();
-}
-
-function drawCircle(color,data){
-	canvasCtx.strokeStyle = color;
-	canvasCtx.lineWidth = 8;
-	canvasCtx.beginPath();
-	let circleRadius = 110;
-	for(let i = 0; i < bufferLength; i++) {
-		let spike = data[i] -128;
-		let x = canvas.width/2 + Math.cos((Math.PI*2)*(i/bufferLength)+(Math.PI/2))*(circleRadius+spike);
-		let y = canvas.height/2 + Math.sin((Math.PI*2)*(i/bufferLength)+(Math.PI/2))*(circleRadius+spike);
-		if(i === 0) {
-			canvasCtx.moveTo(x, y);
-		} else {
-			canvasCtx.lineTo(x, y);
+		let beatVal = Math.abs(this.lowPassDataArray[0]-128)/64;
+		if(beatVal >= this.beatPeakCap && !this.recentBeatPeaks.includes(this.beatPeakCap)){
+			this.logoRotateDirection *= -1;
+			this.logoRotationTween.updateTo(this.logoRotation,Math.PI*this.logoRotateDirection);
+			beatVal = this.beatPeakCap;
+			this.currentColor++;
+			if(this.currentColor === this.colors.length){
+				this.currentColor = 0;
+			}
 		}
+		this.recentBeatPeaks.push(beatVal);
+		if(this.recentBeatPeaks.length > 1){
+			this.recentBeatPeaks.shift();
+		}
+
+		this.beatValSmoothed = this.beatValTween.getValue();
+		//Tone this down a bit for the logo bouncing.
+		let logoBeatValSmoothed = this.beatValSmoothed/3;
+		this.beatValTween.updateTo(this.beatValSmoothed,beatVal);
+		this.logoRotation = this.logoRotationTween.getValue();
+
+		let r = Math.floor((this.colors[this.currentColor].r)*this.beatValSmoothed);
+		let g = Math.floor((this.colors[this.currentColor].g)*this.beatValSmoothed);
+		let b = Math.floor((this.colors[this.currentColor].b)*this.beatValSmoothed);
+
+		let rgb = 'rgb('+r+','+g+','+b+')';
+
+		//drawCircle(rgb,this.dataArray);
+
+		this.canvasCtx.fillStyle = '#ffffff';
+
+		let logoX = this.canvas.width/2;//Math.sin(rot)*200+canvas.height/2;
+		let logoY = this.canvas.height/2;//Math.sin(rot)*200+canvas.height/2;
+
+		this.mgBgBorder.setConfigs({
+			drawX:logoX,
+			drawY:logoY,
+			scale:logoBeatValSmoothed+1,
+			color:rgb,
+			angle:this.logoRotation,
+			fill:false
+		}).draw();
+
+		let fadeSpeed = Math.abs(this.beatValSmoothed)*30+5;
+		//fadeSpeed = 15;
+		if(this.flowIn){
+			this.canvasCtx.drawImage(this.canvasCtx.canvas, 0, 0, this.canvas.width, this.canvas.height, fadeSpeed, fadeSpeed, this.canvas.width - fadeSpeed*2, this.canvas.height - fadeSpeed*2);
+		}else{
+			this.canvasCtx.drawImage(this.canvasCtx.canvas, 0, 0, this.canvas.width, this.canvas.height, -fadeSpeed, -fadeSpeed, this.canvas.width + fadeSpeed*2, this.canvas.height + fadeSpeed*2);
+		}
+
+		this.mgBorder.setConfigs({
+			drawX:logoX,
+			drawY:logoY,
+			scale:logoBeatValSmoothed+1,
+			color:'rgb(0,0,0)',
+			angle:this.logoRotation,
+			fill:true
+		}).draw();
+		this.mgBorder.setConfigs({
+			color:'rgb(255,255,255)',
+			fill:false
+		}).draw();
+
+		let logoWidth = 150*(logoBeatValSmoothed+1);
+		let logoHeight = 140*(logoBeatValSmoothed+1);
+		this.overlayCtx.drawImage(this.fist,this.canvas.width/2-logoWidth/2,this.canvas.height/2-logoHeight/2,logoWidth,logoHeight);
+
+		this.ticker.draw();
+
+		requestAnimationFrame(this.draw.bind(this));
+		this.stats.end();
 	}
-	let firstSpike =  (data[0] -128);
-	let lastX = canvas.width/2 + Math.cos(Math.PI/2)*(circleRadius+firstSpike);
-	let lastY = canvas.height/2 + Math.sin(Math.PI/2)*(circleRadius+firstSpike);
-	canvasCtx.lineTo(lastX, lastY);
-	canvasCtx.stroke();
+
+	drawCircle(color,data){
+		this.canvasCtx.strokeStyle = color;
+		this.canvasCtx.lineWidth = 8;
+		this.canvasCtx.beginPath();
+		let circleRadius = 110;
+		for(let i = 0; i < this.bufferLength; i++) {
+			let spike = data[i] -128;
+			let x = canvas.width/2 + Math.cos((Math.PI*2)*(i/this.bufferLength)+(Math.PI/2))*(circleRadius+spike);
+			let y = canvas.height/2 + Math.sin((Math.PI*2)*(i/this.bufferLength)+(Math.PI/2))*(circleRadius+spike);
+			if(i === 0) {
+				this.canvasCtx.moveTo(x, y);
+			} else {
+				this.canvasCtx.lineTo(x, y);
+			}
+		}
+		let firstSpike =  (data[0] -128);
+		let lastX = canvas.width/2 + Math.cos(Math.PI/2)*(circleRadius+firstSpike);
+		let lastY = canvas.height/2 + Math.sin(Math.PI/2)*(circleRadius+firstSpike);
+		this.canvasCtx.lineTo(lastX, lastY);
+		this.canvasCtx.stroke();
+	}
 }
+
+new MgVisualizer();
+
