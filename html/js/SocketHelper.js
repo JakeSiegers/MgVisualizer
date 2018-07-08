@@ -23,7 +23,6 @@ class SocketHelper{
 	        console.error('WebSocket already connected!');
 	        return;
         }
-	    console.log(this.config.url);
         this.conn = new WebSocket("ws://"+this.config.url);
         this.conn.onopen = function(e){
         	this.connected = true;

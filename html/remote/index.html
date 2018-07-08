@@ -17,7 +17,17 @@
                 this.sock.connect();
             }
             connected(){
-	            this.sock.send({to:'overlay',action:'play',value:'songName'});
+
+	            //this.sock.send({to:'stream',action:'playerBanner',value:'Sirto|TSON|Cleod|ZI'});
+	            let test = "";
+	            for(let i = 0;i<10;i++) {
+	            	test += ' TEST ';
+		            this.sock.send({to: 'stream', action: 'notification', text: 'Sirto'+(i+1)+' Just Followed!'+test,time:4000});
+	            }
+	            setTimeout(function(){
+		            this.sock.send({to:'stream',action:'play',value:'Menu (NES Mix).mp3'});
+	            }.bind(this),10000)
+
             }
         }
         let r = new Remote();

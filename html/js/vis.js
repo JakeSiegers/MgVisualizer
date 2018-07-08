@@ -3,7 +3,20 @@
 */
 
 class MgVisualizer{
-	constructor(){
+	constructor(websocketMode){
+
+		this.websocketMode = websocketMode;
+		this.sock = null;
+		if(this.websocketMode){
+			document.getElementById('infoBox').style.display = 'none';
+			this.sock = new SocketHelper({
+				url:document.location.host+'/webSocket?user=stream',
+				onMessage:this.socketMessageReceived,
+				scope:this
+			});
+			this.sock.connect();
+		}
+
 		this.audioCtx = null;
 
 		this.musicSource = null;
@@ -65,7 +78,7 @@ class MgVisualizer{
 		this.alreadyDrawing = false;
 
 		this.stats = new Stats();
-		document.body.appendChild( this.stats.dom );
+		//document.body.appendChild( this.stats.dom );
 
 		this.audioCtx = new window.AudioContext();
 
@@ -77,6 +90,7 @@ class MgVisualizer{
 		this.pauseTime = 0;
 		this.paused = false;
 		this.flowIn = false;
+		this.musicPlaying = false;
 
 		this.mgColors = [
 			{r:255,g:0,b:0},
@@ -112,28 +126,49 @@ class MgVisualizer{
 		document.onkeypress = this.keypress.bind(this);
 
 		this.logoRotation = Math.PI;
-		this.beatValSmoothed = 0;
 		this.logoRotationTween = new JakeTween({
-			from:this.logoRotation,
-			to:Math.PI,
-			animTime:2000,
-			easeFn:JakeTween.easing.quadratic.out
-		}).start();
+			on:this,
+			to:{logoRotation:Math.PI},
+			time:2000,
+			ease:JakeTween.easing.quadratic.out,
+			neverDestroy:true
+		});
+
+		this.beatValSmoothed = 0;
 		this.beatValTween = new JakeTween({
-			from:this.beatValSmoothed,
-			to:0,
-			animTime:50,
-			easeFn:JakeTween.easing.linear
-		}).start();
+			on:this,
+			to:{beatValSmoothed:0},
+			time:50,
+			ease:JakeTween.easing.linear,
+			neverDestroy:true
+		});
+
+		this.notification = new StreamNotification(this.overlayCanvas);
+
+		this.draw();
+	}
+
+	socketMessageReceived(message){
+		switch(message.action) {
+			case 'play':
+				this.loadSongViaAjax(message.value);
+				break;
+			case 'notification':
+				this.notification.displayNotification(message);
+				break;
+			default:
+				console.error('Unknown action "'+message.action+'"');
+				break;
+		}
 	}
 
 	audioFileChange(event){
-		console.log(arguments);
+		//console.log(arguments);
 		document.getElementById('infoBox').style.display = 'none';
 		if(event.srcElement.files.length > 0){
 			this.musicQueue = event.srcElement.files;
 			this.currentSong = 0;
-			this.loadSong(this.musicQueue[0]);
+			this.loadSongFromBrowse(this.musicQueue[0]);
 		}
 	}
 
@@ -158,16 +193,14 @@ class MgVisualizer{
 		}
 	};
 
-	loadSong(file){
+	loadSongFromBrowse(file){
 		this.loadingSong = true;
-
 		let dot = file.name.lastIndexOf('.');
 		if(dot !== -1){
 			this.ticker.setSong(file.name.substring(0,dot));
 		}else{
 			this.ticker.setSong(file.name);
 		}
-
 		this.stop();
 		let reader = new FileReader();
 		reader.onload = function() {
@@ -180,10 +213,38 @@ class MgVisualizer{
 		reader.readAsArrayBuffer(file);
 	}
 
+	loadSongViaAjax(url){
+
+		let dot = url.lastIndexOf('.');
+		if(dot !== -1){
+			this.ticker.setSong(url.substring(0,dot));
+		}else{
+			this.ticker.setSong(url);
+		}
+
+		this.stop();
+		let xhr = new XMLHttpRequest();
+		xhr.responseType = 'arraybuffer';
+		xhr.onreadystatechange = function(){
+			if(xhr.readyState === XMLHttpRequest.DONE){
+				if(xhr.status === 200){
+					console.log(xhr.response);
+					this.audioCtx.decodeAudioData(xhr.response, function(newBuffer){
+						this.currentBuffer = newBuffer;
+						this.play();
+						this.ticker.show();
+					}.bind(this));
+				} else{
+					alert('something else other than 200 was returned');
+				}
+			}
+		}.bind(this);
+		xhr.open("GET", "music/"+url, true);
+		xhr.send();
+	}
+
 	play(){
-
 		let offset = this.pauseTime;
-
 		//beatContext = new window.AudioContext();
 		this.beatSource = this.audioCtx.createBufferSource();
 		this.beatSource.buffer = this.currentBuffer;
@@ -229,16 +290,13 @@ class MgVisualizer{
 			}
 		}.bind(this);
 
-		if(!this.alreadyDrawing){
-			this.alreadyDrawing = true;
-			this.draw();
-		}
+		this.musicPlaying = true;
 	}
 
 	pause(){
 		if(this.paused){
 			this.play();
-			requestAnimationFrame(this.draw.bind(this));
+			this.paused = false;
 			return;
 		}
 		let elapsed = this.audioCtx.currentTime - this.startTime;
@@ -248,6 +306,7 @@ class MgVisualizer{
 	}
 
 	stop(){
+		this.musicPlaying = false;
 		this.paused = false;
 		if(this.musicSource){
 			this.musicSource.disconnect();
@@ -262,10 +321,20 @@ class MgVisualizer{
 	}
 
 	draw(time) {
-		if(this.paused){
+		this.stats.begin();
+		this.overlayCtx.clearRect(0, 0, this.overlayCanvas.width, this.overlayCanvas.height);
+		JakeTween.update();
+		this.ticker.draw();
+		this.notification.draw();
+		this.drawVisuals();
+		requestAnimationFrame(this.draw.bind(this));
+		this.stats.end();
+	}
+
+	drawVisuals(){
+		if(this.paused || !this.musicPlaying){
 			return;
 		}
-		this.stats.begin();
 
 		this.musicAnalyser.getByteTimeDomainData(this.dataArray);
 		this.beatAnalyser.getByteTimeDomainData(this.lowPassDataArray);
@@ -273,13 +342,10 @@ class MgVisualizer{
 		//this.canvasCtx.fillStyle = 'rgba(0, 0, 0, 0.03)';
 		//this.canvasCtx.fillRect(0,0,canvas.width,canvas.height);
 
-		this.overlayCtx.clearRect(0, 0, this.overlayCanvas.width, this.overlayCanvas.height);
-
-
 		let beatVal = Math.abs(this.lowPassDataArray[0]-128)/64;
 		if(beatVal >= this.beatPeakCap && !this.recentBeatPeaks.includes(this.beatPeakCap)){
 			this.logoRotateDirection *= -1;
-			this.logoRotationTween.updateTo(this.logoRotation,Math.PI*this.logoRotateDirection);
+			this.logoRotationTween.setConfig({to:{logoRotation:Math.PI*this.logoRotateDirection}}).start();
 			beatVal = this.beatPeakCap;
 			this.currentColor++;
 			if(this.currentColor === this.colors.length){
@@ -291,11 +357,10 @@ class MgVisualizer{
 			this.recentBeatPeaks.shift();
 		}
 
-		this.beatValSmoothed = this.beatValTween.getValue();
 		//Tone this down a bit for the logo bouncing.
 		let logoBeatValSmoothed = this.beatValSmoothed/3;
-		this.beatValTween.updateTo(this.beatValSmoothed,beatVal);
-		this.logoRotation = this.logoRotationTween.getValue();
+		this.beatValTween.setConfig({to:{beatValSmoothed:beatVal}}).start();
+
 
 		let r = Math.floor((this.colors[this.currentColor].r)*this.beatValSmoothed);
 		let g = Math.floor((this.colors[this.currentColor].g)*this.beatValSmoothed);
@@ -303,7 +368,7 @@ class MgVisualizer{
 
 		let rgb = 'rgb('+r+','+g+','+b+')';
 
-		//drawCircle(rgb,this.dataArray);
+		//this.drawCircle(rgb,this.dataArray);
 
 		this.canvasCtx.fillStyle = '#ffffff';
 
@@ -343,11 +408,6 @@ class MgVisualizer{
 		let logoWidth = 150*(logoBeatValSmoothed+1);
 		let logoHeight = 140*(logoBeatValSmoothed+1);
 		this.overlayCtx.drawImage(this.fist,this.canvas.width/2-logoWidth/2,this.canvas.height/2-logoHeight/2,logoWidth,logoHeight);
-
-		this.ticker.draw();
-
-		requestAnimationFrame(this.draw.bind(this));
-		this.stats.end();
 	}
 
 	drawCircle(color,data){
@@ -357,8 +417,8 @@ class MgVisualizer{
 		let circleRadius = 110;
 		for(let i = 0; i < this.bufferLength; i++) {
 			let spike = data[i] -128;
-			let x = canvas.width/2 + Math.cos((Math.PI*2)*(i/this.bufferLength)+(Math.PI/2))*(circleRadius+spike);
-			let y = canvas.height/2 + Math.sin((Math.PI*2)*(i/this.bufferLength)+(Math.PI/2))*(circleRadius+spike);
+			let x = this.canvas.width/2 + Math.cos((Math.PI*2)*(i/this.bufferLength)+(Math.PI/2))*(circleRadius+spike);
+			let y = this.canvas.height/2 + Math.sin((Math.PI*2)*(i/this.bufferLength)+(Math.PI/2))*(circleRadius+spike);
 			if(i === 0) {
 				this.canvasCtx.moveTo(x, y);
 			} else {
@@ -366,12 +426,9 @@ class MgVisualizer{
 			}
 		}
 		let firstSpike =  (data[0] -128);
-		let lastX = canvas.width/2 + Math.cos(Math.PI/2)*(circleRadius+firstSpike);
-		let lastY = canvas.height/2 + Math.sin(Math.PI/2)*(circleRadius+firstSpike);
+		let lastX = this.canvas.width/2 + Math.cos(Math.PI/2)*(circleRadius+firstSpike);
+		let lastY = this.canvas.height/2 + Math.sin(Math.PI/2)*(circleRadius+firstSpike);
 		this.canvasCtx.lineTo(lastX, lastY);
 		this.canvasCtx.stroke();
 	}
 }
-
-new MgVisualizer();
-

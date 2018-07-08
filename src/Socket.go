@@ -98,7 +98,6 @@ func (socket *Socket) sendOutgoingMessages() {
 		case message, ok := <-socket.send:
 			socket.connection.SetWriteDeadline(time.Now().Add(writeWait))
 			if !ok {
-				// The hub closed the channel.
 				socket.connection.WriteMessage(websocket.CloseMessage, []byte{})
 				return
 			}
@@ -109,7 +108,6 @@ func (socket *Socket) sendOutgoingMessages() {
 			}
 			w.Write([]byte(message))
 
-			// Add queued chat messages to the current websocket message.
 			n := len(socket.send)
 			for i := 0; i < n; i++ {
 				w.Write(newline)
