@@ -30,7 +30,6 @@ var (
 )
 
 type Socket struct {
-	socketWatcher *SocketWatcher
 	connection *websocket.Conn
 	send chan string
 	user string
@@ -49,7 +48,7 @@ func (socket *Socket) errorMessage(msg string){
 func (socket *Socket) readIncomingMessages() {
 	defer func() {
 		log.Println("Closing Read")
-		socket.socketWatcher.unregister <- socket
+		socketWatcher.unregister <- socket
 		socket.connection.Close()
 	}()
 	socket.connection.SetReadLimit(maxMessageSize)
@@ -70,7 +69,7 @@ func (socket *Socket) readIncomingMessages() {
 		//fmt.Printf("%v",decodedMessage["action"])
 		if val, ok := decodedMessage["to"]; ok{
 			log.Println(val)
-			socket.socketWatcher.message <- &SocketMessage{to: decodedMessage["to"], text: string(message), from:socket}
+			socketWatcher.message <- &SocketMessage{to: decodedMessage["to"], text: string(message), from:socket}
 		}else{
 			socket.send <- "To: required!"
 		}

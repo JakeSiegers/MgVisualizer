@@ -228,7 +228,6 @@ class MgVisualizer{
 		xhr.onreadystatechange = function(){
 			if(xhr.readyState === XMLHttpRequest.DONE){
 				if(xhr.status === 200){
-					console.log(xhr.response);
 					this.audioCtx.decodeAudioData(xhr.response, function(newBuffer){
 						this.currentBuffer = newBuffer;
 						this.play();

@@ -64,7 +64,10 @@ func (socketWatcher *SocketWatcher) run() {
 					log.Println("Sending " + string(message.text) + " To " + string(message.to))
 					val.send <- message.text
 				}else{
-					message.from.errorMessage("Could Not Find User " + string(message.to))
+					log.Println("Could Not Find User " + string(message.to))
+					if message.from != nil {
+						message.from.errorMessage("Could Not Find User " + string(message.to))
+					}
 				}
 				break
 		}
