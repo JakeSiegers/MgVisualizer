@@ -144,6 +144,7 @@ class MgVisualizer{
 		});
 
 		this.notification = new StreamNotification(this.overlayCanvas);
+		this.streamTimer = new StreamTimer(this.overlayCanvas);
 
 		this.draw();
 	}

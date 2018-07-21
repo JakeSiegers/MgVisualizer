@@ -2,115 +2,14 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/extjs/6.2.0/ext-all.js" integrity="sha256-Ny6vepWYKuhJFRgeH+NqxcclK3o3TlYnbrUj44LSQPI=" crossorigin="anonymous"></script>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/extjs/6.2.0/classic/theme-classic/theme-classic.js" integrity="sha256-vY1HmNPLEZWeTx2SSxH2I2cjEPpayqXRDYQhb169bms=" crossorigin="anonymous"></script>
-	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/extjs/6.2.0/classic/theme-classic/resources/theme-classic-all.css" integrity="sha256-XNDYU+XigXehwLNa/ymKxuGgJXh80PH3JffQZwy4d3A=" crossorigin="anonymous" />
-    <title>Remote</title>
+	<title>(Syndrome's) Remote!</title>
+	<script src="ext-6.2.0-gpl/ext-all.js"></script>
+	<script src="ext-6.2.0-gpl/classic/theme-neptune-touch/theme-neptune-touch.js"></script>
+	<link rel="stylesheet" href="ext-6.2.0-gpl/classic/theme-neptune-touch/resources/theme-neptune-touch-all.css"/>
 	<script src="../js/Ajax.js" ></script>
 	<script src="../js/SocketHelper.js" ></script>
-	<script src="../js/Remote.js" ></script>
 	<script>
 		var Ext = Ext || {};
-		Ext.application({
-			name: 'Remote',
-			launch: function() {
-				Ext.create('RemoteView');
-			}
-		});
-
-		var allMusicStore = Ext.create('Ext.data.Store',{
-			'fields': ['song']
-		});
-		var musicQueueStore = Ext.create('Ext.data.Store',{
-			'fields': ['song']
-		});
-		var musicGridColumns = [{
-			text: 'Song',
-			dataIndex: 'song',
-			flex:1
-		}];
-
-		Ext.define('ConfigPanel', {
-			extend: 'Ext.container.Container',
-			xtype: 'configPanel',
-			items:[
-
-			]
-		});
-
-		Ext.define('MusicSorter', {
-			extend: 'Ext.container.Container',
-			xtype: 'musicSorter',
-
-			requires: [
-				'Ext.grid.Panel',
-				'Ext.layout.container.HBox'
-			],
-
-			width: 650,
-			height: 300,
-
-			layout: {
-				type: 'hbox',
-				align: 'stretch'
-			},
-			items: [{
-				xtype: 'grid',
-				title: 'All Music',
-				itemId: 'grid1',
-				flex: 1,
-				viewConfig: {
-					plugins: {
-						ptype: 'gridviewdragdrop',
-						containerScroll: true,
-						copy:true,
-						ddGroup:'dd',
-					}
-				},
-				listeners: {
-					drop: function(){
-						Ext.ComponentQuery.query('#grid2')[0].updateQueue();
-					}
-				},
-				store: allMusicStore,
-				columns: musicGridColumns,
-
-			}, {
-				xtype: 'grid',
-				title: 'Current Queue',
-				itemId: 'grid2',
-				flex: 1,
-				viewConfig: {
-					plugins: {
-						ptype: 'gridviewdragdrop',
-						containerScroll: true,
-						ddGroup:'dd',
-					},
-				},
-				listeners: {
-					drop: function(){
-						this.updateQueue();
-					},
-					beforedrop:function(node,data){
-						return data.view.up().getItemId() === 'grid2' || this.currentQueue.indexOf(data.records[0].data.song) === -1;
-					}
-				},
-				updateQueue:function(){
-					this.currentQueue = [];
-					musicQueueStore.getData().each(function(item){
-						this.currentQueue.push(item.data.song);
-					},this);
-
-					Ajax.request({
-						url:'/api/setMusicQueue',
-						params:{music:this.currentQueue},
-					});
-				},
-				store: musicQueueStore,
-				columns: musicGridColumns,
-			}]
-		});
-
 		Ext.define('RemoteView', {
 			extend: 'Ext.container.Viewport',
 			requires: [
@@ -127,39 +26,29 @@
 						type: 'vbox',
 						align: 'stretch'
 					},
-					listeners:{
-						afterrender:function(){
-							Ajax.request({
-								url: '/api/getMusic',
-								success: function (reply) {
-									allMusicStore.loadData(reply.music);
-								},
-								scope:this
-							});
-
-							Ajax.request({
-								url: '/api/getMusicQueue',
-								success: function (reply) {
-									musicQueueStore.loadData(reply.musicQueue);
-									var musicSorter = this.queryById('musicSorter');
-									var queueGrid = musicSorter.queryById('grid2');
-									queueGrid.currentQueue = [];
-									musicQueueStore.getData().each(function(item){
-										queueGrid.currentQueue.push(item.data.song);
-									},this);
-								},
-								scope:this
-							});
-						},
-					},
 					items:[
-						{xtype:'configPanel',flex:1,itemId:'configPanel'},
-						{xtype:'musicSorter',flex:1,itemId:'musicSorter'}
+						{xtype: 'connectionmonitor'},
+						{xtype: 'textchangers'},
+						{xtype: 'buttons',height:300},
+						{xtype:'musicgrids',flex:1}
 					]
-
 				}
-
 			]
+		});
+		Ext.application({
+			stores: [
+				'TimeStore'
+			],
+			views: [
+				'Buttons',
+				'TextChangers',
+				'MusicGrids',
+				'ConnectionMonitor'
+			],
+			name: 'MG',
+			launch: function() {
+				Ext.create('RemoteView');
+			}
 		});
 	</script>
 </head>
