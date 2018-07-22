@@ -28,12 +28,24 @@ Ext.define('MG.view.Buttons', {
 				{
 					xtype: 'button',
 					flex: 1,
-					text: 'MUSIC SCENE'
+					text: 'MUSIC SCENE',
+					listeners:{
+						click:function(){
+							obsSocket.send({"request-type":"SetCurrentScene","scene-name":'music'});
+						},
+						scope:this
+					}
 				},
 				{
 					xtype: 'button',
 					flex: 1,
-					text: 'SSF2 SCENE'
+					text: 'SSF2 SCENE',
+					listeners:{
+						click:function(){
+							obsSocket.send({"request-type":"SetCurrentScene","scene-name":'ssf2'});
+						},
+						scope:this
+					}
 				},
 				{
 					xtype: 'button',
@@ -80,6 +92,5 @@ Ext.define('MG.view.Buttons', {
 				}
 			]
 		}
-	]
-
+	],
 });

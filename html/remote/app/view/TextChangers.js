@@ -5,142 +5,165 @@ Ext.define('MG.view.TextChangers', {
 		'Ext.container.Container',
 		'Ext.form.field.ComboBox',
 		'Ext.button.Button',
-		'Ext.form.field.Display'
+		'Ext.form.field.Display',
+		'Ext.grid.property.Grid'
 	],
 	defaultListenerScope: true,
+	layout: {
+		type: 'hbox',
+		align: 'stretch'
+	},
 	items: [
 		{
 			xtype: 'container',
-			defaults: {
-				margin: 5
-			},
-			layout: {
-				type: 'hbox',
-				align: 'stretch'
-			},
 			items: [
 				{
-					xtype: 'combobox',
-					fieldLabel: 'Timer',
-					displayField: 'time',
-					forceSelection: true,
-					queryMode: 'local',
-					store: 'TimeStore',
-					valueField: 'seconds',
-					listeners: {
-						afterrender: 'onComboboxAfterRender'
-					}
+					xtype: 'container',
+					defaults: {
+						margin: 5
+					},
+					layout: {
+						type: 'hbox',
+						align: 'stretch'
+					},
+					items: [
+						{
+							xtype: 'combobox',
+							fieldLabel: 'Timer',
+							displayField: 'time',
+							forceSelection: true,
+							queryMode: 'local',
+							store: 'TimeStore',
+							valueField: 'seconds',
+							listeners: {
+								afterrender: 'onComboboxAfterRender'
+							}
+						},
+						{
+							xtype: 'button',
+							iconCls: '',
+							text: 'Start Timer'
+						},
+						{
+							xtype: 'button',
+							text: 'Stop Timer'
+						},
+						{
+							xtype: 'displayfield',
+							height: 20,
+							fieldLabel: 'Timer:',
+							value: '00:00'
+						}
+					]
 				},
 				{
-					xtype: 'button',
-					iconCls: '',
-					text: 'Start Timer'
+					xtype: 'container',
+					defaults: {
+						margin: 5
+					},
+					layout: {
+						type: 'hbox',
+						align: 'stretch'
+					},
+					items: [
+						{
+							xtype: 'textfield',
+							fieldLabel: 'Primary Text',
+							emptyText: 'MG @ Smashcon'
+						},
+						{
+							xtype: 'button',
+							text: 'Update Text'
+						}
+					]
 				},
 				{
-					xtype: 'button',
-					text: 'Stop Timer'
+					xtype: 'container',
+					defaults: {
+						margin: 5
+					},
+					layout: {
+						type: 'hbox',
+						align: 'stretch'
+					},
+					items: [
+						{
+							xtype: 'textfield',
+							fieldLabel: 'Notification',
+							itemId:'notificationText'
+						},
+						{
+							xtype: 'button',
+							text: 'Send',
+							listeners:{
+								click:'sendNotification'
+							}
+						}
+					]
 				},
 				{
-					xtype: 'displayfield',
-					height: 20,
-					fieldLabel: 'Timer:',
-					value: '00:00'
+					xtype: 'container',
+					defaults: {
+						margin: 5
+					},
+					layout: {
+						type: 'hbox',
+						align: 'stretch'
+					},
+					items: [
+						{
+							xtype: 'textfield',
+							fieldLabel: 'Player 1',
+							emptyText: '[ Empty ]'
+						},
+						{
+							xtype: 'textfield',
+							fieldLabel: 'Player 2',
+							emptyText: '[ Empty ]'
+						}
+					]
+				},
+				{
+					xtype: 'container',
+					defaults: {
+						margin: 5
+					},
+					layout: {
+						type: 'hbox',
+						align: 'stretch'
+					},
+					items: [
+						{
+							xtype: 'textfield',
+							fieldLabel: 'Player 3',
+							emptyText: '[ Empty ]'
+						},
+						{
+							xtype: 'textfield',
+							fieldLabel: 'Player 4',
+							emptyText: '[ Empty ]'
+						},
+						{
+							xtype: 'button',
+							text: 'Send'
+						}
+					]
 				}
 			]
 		},
 		{
 			xtype: 'container',
-			defaults: {
-				margin: 5
-			},
-			layout: {
-				type: 'hbox',
-				align: 'stretch'
-			},
+			flex: 1,
+			layout: 'fit',
 			items: [
 				{
-					xtype: 'textfield',
-					fieldLabel: 'Primary Text',
-					emptyText: 'MG @ Smashcon'
-				},
-				{
-					xtype: 'button',
-					text: 'Update Text'
-				}
-			]
-		},
-		{
-			xtype: 'container',
-			defaults: {
-				margin: 5
-			},
-			layout: {
-				type: 'hbox',
-				align: 'stretch'
-			},
-			items: [
-				{
-					xtype: 'textfield',
-					fieldLabel: 'Notification',
-					itemId:'notificationText'
-				},
-				{
-					xtype: 'button',
-					text: 'Send',
-					listeners:{
-						click:'sendNotification'
-					}
-				}
-			]
-		},
-		{
-			xtype: 'container',
-			defaults: {
-				margin: 5
-			},
-			layout: {
-				type: 'hbox',
-				align: 'stretch'
-			},
-			items: [
-				{
-					xtype: 'textfield',
-					fieldLabel: 'Player 1',
-					emptyText: '[ Empty ]'
-				},
-				{
-					xtype: 'textfield',
-					fieldLabel: 'Player 2',
-					emptyText: '[ Empty ]'
-				}
-			]
-		},
-		{
-			xtype: 'container',
-			defaults: {
-				margin: 5
-			},
-			layout: {
-				type: 'hbox',
-				align: 'stretch'
-			},
-			items: [
-				{
-					xtype: 'textfield',
-					fieldLabel: 'Player 3',
-					emptyText: '[ Empty ]'
-				},
-				{
-					xtype: 'textfield',
-					fieldLabel: 'Player 4',
-					emptyText: '[ Empty ]'
-				},
-				{
-					xtype: 'button',
-					text: 'Send'
+					xtype: 'propertygrid',
+					title: 'Stream Stats',
+					itemId:'streamStats'
 				}
 			]
 		}
+
 	],
 	onComboboxAfterRender: function(component, eOpts) {
 		var times = [];

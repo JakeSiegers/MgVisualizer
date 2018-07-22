@@ -8,6 +8,24 @@
 	<link rel="stylesheet" href="ext-6.2.0-gpl/classic/theme-neptune-touch/resources/theme-neptune-touch-all.css"/>
 	<script src="../js/Ajax.js" ></script>
 	<script src="../js/SocketHelper.js" ></script>
+	<script src="../libraries/sha256.js" ></script>
+	<style>
+		.status{
+			height:50px;
+			text-align: center;
+			vertical-align: middle;
+			line-height: 50px;
+			font-size:20px;
+		}
+
+		.statusGreen{
+			background:green;
+		}
+
+		.statusRed{
+			background:red;
+		}
+	</style>
 	<script>
 		var Ext = Ext || {};
 		Ext.define('RemoteView', {
@@ -21,15 +39,14 @@
 			items: [
 				{
 					xtype: 'panel',
-					title: 'Remote',
 					layout: {
 						type: 'vbox',
 						align: 'stretch'
 					},
 					items:[
 						{xtype: 'connectionmonitor'},
-						{xtype: 'textchangers'},
-						{xtype: 'buttons',height:300},
+						{xtype: 'textchangers',height:300},
+						{xtype: 'buttons',height:200},
 						{xtype:'musicgrids',flex:1}
 					]
 				}
