@@ -26,22 +26,25 @@ Ajax.request = function(config){
 		jsonError: "Bad Server Response!",
 		headers:{
 			'Content-Type':'application/json'
-		}
+		},
+		responseType:'json'
 	};
 
 	let conf = Ajax.overrideDefaults(config,ajaxDefaults);
 
 	let r = new XMLHttpRequest();
 	r.onreadystatechange = function(event) {
-		if(r.readyState === XMLHttpRequest.DONE) {
-			let jsonData = {};
+		if(r.readyState === XMLHttpRequest.DONE){
+			let jsonData = '';
 			try {
-				jsonData = JSON.parse(r.response);
-			}catch (e) {
-				conf.failure.call(conf.scope,conf.jsonError,jsonData);
+				if(r.response.trim() !== '') {
+					jsonData = JSON.parse(r.response);
+				}
+			} catch (e) {
+				conf.failure.call(conf.scope, conf.jsonError, jsonData);
 				return;
 			}
-			if(r.status === 200){
+			if(r.status >= 200 && r.status < 300){
 				conf.success.call(conf.scope,jsonData);
 			} else{
 				if(jsonData.error){
@@ -52,7 +55,7 @@ Ajax.request = function(config){
 			}
 		}
 	};
-	r.open("POST",conf.url, true);
+	r.open(conf.method,conf.url, true);
 	for(let key in conf.headers){
 		if(conf.headers.hasOwnProperty(key)) {
 			r.setRequestHeader(key, conf.headers[key]);

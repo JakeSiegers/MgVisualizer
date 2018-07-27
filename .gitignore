@@ -1,4 +1,5 @@
 .idea/
 localSocketServer.exe
 twitchRemote/twitchRemote.exe
+twitchRemote/password.txt
 html/music/*.mp3

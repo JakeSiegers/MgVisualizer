@@ -5,8 +5,12 @@ import (
 	"log"
 	"time"
 	"github.com/gorilla/websocket"
-	"encoding/json"
-)
+	"fmt"
+	"io/ioutil"
+		"crypto/sha256"
+	"crypto/hmac"
+	"github.com/tidwall/gjson"
+				)
 
 const (
 	// Time allowed to write a message to the peer.
@@ -36,16 +40,24 @@ var (
 		WriteBufferSize: 1024,
 	}
 	socketWatcher *SocketWatcher
+	secret = ""
 )
 
 func main(){
+	b, err := ioutil.ReadFile("password.txt")
+	if err != nil {
+		fmt.Print(err)
+	}
+	secret = string(b)
+
 	socketWatcher = newSocketWatcher()
 	go socketWatcher.run()
-	http.HandleFunc("/", httpHandler)
+	http.Handle("/",http.FileServer(http.Dir("../html")))
+	http.HandleFunc("/api/", httpHandler)
 	http.HandleFunc("/webSocket", func(response http.ResponseWriter, request *http.Request) {
 		openWebSocket(response, request)
 	})
-	port := ":8080"
+	port := ":18080"
 	log.Println("Listening on "+port)
 	httpError := http.ListenAndServe(port, nil)
 	if httpError != nil {
@@ -54,12 +66,70 @@ func main(){
 }
 
 func httpHandler(response http.ResponseWriter, request *http.Request){
-	socketWatcher.broadcast <- "Someone Subscribed"
-	output := make(map[string]interface{})
-	output["success"] = true
-	response.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	response.WriteHeader(http.StatusOK)
-	json.NewEncoder(response).Encode(output)
+
+	if request.URL.Path == "/"{
+		http.ServeFile(response,request,"index.html")
+		return
+	}
+
+	log.Println("--------------");
+	query := request.URL.Query()
+	//log.Printf("%v\n",request.URL.Query())
+	//for k, v := range request.Header {
+	//	log.Printf("Header field %q, Value %q\n", k, v)
+	//}
+
+	switch request.Method {
+	case "GET":
+		log.Println("GET REQUEST")
+		if val, ok := query["hub.challenge"]; ok{
+			response.WriteHeader(http.StatusOK)
+			log.Printf("Sending %v\n",val[0])
+			fmt.Fprint(response,val[0])
+		}
+		break
+	case "POST":
+		log.Println("POST REQUEST")
+		body, _ := ioutil.ReadAll(request.Body)
+		log.Println(string(body))
+
+		signature := request.Header.Get("X-Hub-Signature")
+
+		key := []byte(secret)
+		shaObj := hmac.New(sha256.New, key)
+		shaObj.Write(body)
+		hash := shaObj.Sum(nil)
+		stringHash := fmt.Sprintf("%x", hash)
+		log.Println("Looking For Hash: "+stringHash)
+
+		if len(signature) > 7 {
+			foundHash := substr(signature,7,len(signature))
+			log.Printf("Found Hash: %s\n",foundHash)
+			if foundHash == stringHash{
+				log.Println("Success!")
+				from := gjson.Get(string(body), "data.#.from_id")
+				for _, id := range from.Array() {
+					socketWatcher.broadcast <- id.String()
+				}
+				return
+			}
+		}
+		log.Println("DENIED")
+		response.WriteHeader(http.StatusNotFound)
+		break
+	default:
+		log.Println("OTHER REQUEST")
+		response.WriteHeader(http.StatusNotFound)
+	}
+}
+
+func substr(s string,pos,length int) string{
+	runes:=[]rune(s)
+	l := pos+length
+	if l > len(runes) {
+		l = len(runes)
+	}
+	return string(runes[pos:l])
 }
 
 func (socketWatcher *SocketWatcher) run() {
