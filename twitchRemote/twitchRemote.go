@@ -67,11 +67,6 @@ func main(){
 
 func httpHandler(response http.ResponseWriter, request *http.Request){
 
-	if request.URL.Path == "/"{
-		http.ServeFile(response,request,"index.html")
-		return
-	}
-
 	log.Println("--------------");
 	query := request.URL.Query()
 	//log.Printf("%v\n",request.URL.Query())
