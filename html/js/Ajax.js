@@ -2,15 +2,35 @@ class Ajax{
 
 }
 
-Ajax.request = function(config){
-	let conf = {};
-	for(let key in Ajax.config){
-		if(config.hasOwnProperty(key)){
-			conf[key] = config[key];
-		}else{
-			conf[key] = Ajax.config[key];
+Ajax.overrideDefaults = function(input,defaults) {
+	let keys = Object.keys(defaults);
+	for (let i = 0; i < keys.length; i++) {
+		if(!input.hasOwnProperty(keys[i])){
+			input[keys[i]] = defaults[keys[i]];
+		}else if(typeof defaults[keys[i]] === 'object'){
+			input[keys[i]] = Ajax.overrideDefaults(input[keys[i]],defaults[keys[i]]);
 		}
 	}
+	return input;
+};
+
+Ajax.request = function(config){
+	const ajaxDefaults = {
+		url:'',
+		params:{},
+		method:'POST',
+		success:function(reply){},
+		failure:function(error,reply){console.error(error,reply)},
+		scope:this,
+		error:"Unknown Server Error!",
+		jsonError: "Bad Server Response!",
+		headers:{
+			'Content-Type':'application/json'
+		}
+	};
+
+	let conf = Ajax.overrideDefaults(config,ajaxDefaults);
+
 	let r = new XMLHttpRequest();
 	r.onreadystatechange = function(event) {
 		if(r.readyState === XMLHttpRequest.DONE) {
@@ -59,16 +79,5 @@ Ajax.request = function(config){
 	r.send(postStr);
 };
 
-Ajax.config = {
-	url:'',
-	params:{},
-	method:'POST',
-	success:function(reply){},
-	failure:function(error,reply){console.error(error,reply)},
-	scope:this,
-	error:"Unknown Server Error!",
-	jsonError: "Bad Server Response!",
-	headers:{
-		'Content-Type':'application/json'
-	}
-};
+
+
