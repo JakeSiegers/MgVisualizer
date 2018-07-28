@@ -368,7 +368,7 @@ class MgVisualizer{
 
 		let rgb = 'rgb('+r+','+g+','+b+')';
 
-		//this.drawCircle(rgb,this.dataArray);
+		this.drawCircle(rgb,this.dataArray);
 
 		this.canvasCtx.fillStyle = '#ffffff';
 

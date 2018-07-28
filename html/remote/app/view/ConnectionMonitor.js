@@ -107,6 +107,7 @@ Ext.define('MG.view.ConnectionMonitor', {
 		var localSocketStatus = this.queryById('localSocketStatus');
 		localSocketStatus.removeCls('statusRed');
 		localSocketStatus.addCls('statusGreen');
+		localSocket.send({action:'play',to:'stream',value:'Snails House - Sunday [Ordinary Songs 4].mp3'});
 	},
 	localClosed:function(){
 		var localSocketStatus = this.queryById('localSocketStatus');

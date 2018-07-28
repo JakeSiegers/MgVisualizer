@@ -177,7 +177,7 @@ Ext.define('MG.view.TextChangers', {
 	sendNotification: function(){
 		var notificationText = this.queryById('notificationText').getValue();
 		if(notificationText.trim() !== '') {
-			localSocket.send({to: 'stream', action: 'notification', text:notificationText, time: 1000});
+			localSocket.send({to: 'stream', action: 'notification', text:notificationText, time: 5000});
 			this.queryById('notificationText').setValue('');
 		}
 	}

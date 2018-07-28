@@ -1,16 +1,16 @@
 package main
 
 import (
-	"net/http"
-	"log"
-	"time"
-	"github.com/gorilla/websocket"
-	"fmt"
-	"io/ioutil"
-		"crypto/sha256"
 	"crypto/hmac"
+	"crypto/sha256"
+	"fmt"
+	"github.com/gorilla/websocket"
 	"github.com/tidwall/gjson"
-				)
+	"io/ioutil"
+	"log"
+	"net/http"
+	"time"
+)
 
 const (
 	// Time allowed to write a message to the peer.
@@ -23,27 +23,27 @@ const (
 
 type Socket struct {
 	connection *websocket.Conn
-	send chan string
+	send       chan string
 }
 
 type SocketWatcher struct {
-	sockets map[*Socket]bool
-	broadcast chan string
-	register chan *Socket
+	sockets    map[*Socket]bool
+	broadcast  chan string
+	register   chan *Socket
 	unregister chan *Socket
 }
 
 var (
-	newline = []byte{'\n'}
+	newline  = []byte{'\n'}
 	upgrader = websocket.Upgrader{
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
 	}
 	socketWatcher *SocketWatcher
-	secret = ""
+	secret        = ""
 )
 
-func main(){
+func main() {
 	b, err := ioutil.ReadFile("password.txt")
 	if err != nil {
 		fmt.Print(err)
@@ -52,22 +52,22 @@ func main(){
 
 	socketWatcher = newSocketWatcher()
 	go socketWatcher.run()
-	http.Handle("/",http.FileServer(http.Dir("../html")))
+	http.Handle("/", http.FileServer(http.Dir("../html")))
 	http.HandleFunc("/api/", httpHandler)
 	http.HandleFunc("/webSocket", func(response http.ResponseWriter, request *http.Request) {
 		openWebSocket(response, request)
 	})
 	port := ":18080"
-	log.Println("Listening on "+port)
+	log.Println("Listening on " + port)
 	httpError := http.ListenAndServe(port, nil)
 	if httpError != nil {
 		log.Fatal("Failed to start server: ", httpError)
 	}
 }
 
-func httpHandler(response http.ResponseWriter, request *http.Request){
+func httpHandler(response http.ResponseWriter, request *http.Request) {
 
-	log.Println("--------------");
+	log.Println("--------------")
 	query := request.URL.Query()
 	//log.Printf("%v\n",request.URL.Query())
 	//for k, v := range request.Header {
@@ -77,10 +77,10 @@ func httpHandler(response http.ResponseWriter, request *http.Request){
 	switch request.Method {
 	case "GET":
 		log.Println("GET REQUEST")
-		if val, ok := query["hub.challenge"]; ok{
+		if val, ok := query["hub.challenge"]; ok {
 			response.WriteHeader(http.StatusOK)
-			log.Printf("Sending %v\n",val[0])
-			fmt.Fprint(response,val[0])
+			log.Printf("Sending %v\n", val[0])
+			fmt.Fprint(response, val[0])
 		}
 		break
 	case "POST":
@@ -95,12 +95,12 @@ func httpHandler(response http.ResponseWriter, request *http.Request){
 		shaObj.Write(body)
 		hash := shaObj.Sum(nil)
 		stringHash := fmt.Sprintf("%x", hash)
-		log.Println("Looking For Hash: "+stringHash)
+		log.Println("Looking For Hash: " + stringHash)
 
 		if len(signature) > 7 {
-			foundHash := substr(signature,7,len(signature))
-			log.Printf("Found Hash: %s\n",foundHash)
-			if foundHash == stringHash{
+			foundHash := substr(signature, 7, len(signature))
+			log.Printf("Found Hash: %s\n", foundHash)
+			if foundHash == stringHash {
 				log.Println("Success!")
 				from := gjson.Get(string(body), "data.#.from_id")
 				for _, id := range from.Array() {
@@ -118,9 +118,9 @@ func httpHandler(response http.ResponseWriter, request *http.Request){
 	}
 }
 
-func substr(s string,pos,length int) string{
-	runes:=[]rune(s)
-	l := pos+length
+func substr(s string, pos, length int) string {
+	runes := []rune(s)
+	l := pos + length
 	if l > len(runes) {
 		l = len(runes)
 	}
@@ -156,10 +156,10 @@ func (socketWatcher *SocketWatcher) run() {
 
 func newSocketWatcher() *SocketWatcher {
 	return &SocketWatcher{
-		broadcast: make(chan string),
-		register: make(chan *Socket),
+		broadcast:  make(chan string),
+		register:   make(chan *Socket),
 		unregister: make(chan *Socket),
-		sockets: make(map[*Socket]bool),
+		sockets:    make(map[*Socket]bool),
 	}
 }
 

@@ -2,11 +2,11 @@ package main
 
 import (
 	"bytes"
-	"log"
-	"time"
-	"github.com/gorilla/websocket"
 	"encoding/json"
 	"fmt"
+	"github.com/gorilla/websocket"
+	"log"
+	"time"
 )
 
 const (
@@ -21,8 +21,8 @@ const (
 )
 
 var (
-	newline = []byte{'\n'}
-	space   = []byte{' '}
+	newline  = []byte{'\n'}
+	space    = []byte{' '}
 	upgrader = websocket.Upgrader{
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
@@ -31,12 +31,12 @@ var (
 
 type Socket struct {
 	connection *websocket.Conn
-	send chan string
-	user string
+	send       chan string
+	user       string
 }
 
-func (socket *Socket) errorMessage(msg string){
-	encodedJson, err := json.Marshal(&WebSocketErrorOut{Error:true, Text:msg})
+func (socket *Socket) errorMessage(msg string) {
+	encodedJson, err := json.Marshal(&WebSocketErrorOut{Error: true, Text: msg})
 	if err != nil {
 		fmt.Println("error:", err)
 	}
@@ -65,21 +65,21 @@ func (socket *Socket) readIncomingMessages() {
 		message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
 
 		decodedMessage := make(map[string]string)
-		json.Unmarshal(message,&decodedMessage)
+		json.Unmarshal(message, &decodedMessage)
 		//fmt.Printf("%v",decodedMessage["action"])
-		if val, ok := decodedMessage["to"]; ok{
+		if val, ok := decodedMessage["to"]; ok {
 			log.Println(val)
-			socketWatcher.message <- &SocketMessage{to: decodedMessage["to"], text: string(message), from:socket}
-		}else{
-			socket.send <- "To: required!"
+			socketWatcher.message <- &SocketMessage{to: decodedMessage["to"], text: string(message), from: socket}
+		} else {
+			socket.errorMessage("To: required")
 		}
 
 		/*
-		if bytes.Compare(message,[]byte("message")) == 0 {
-			socket.socketWatcher.message <- &text{to: []byte("someone"), message: message}
-		}else{
-			socket.socketWatcher.broadcast <- message
-		}
+			if bytes.Compare(message,[]byte("message")) == 0 {
+				socket.socketWatcher.message <- &text{to: []byte("someone"), message: message}
+			}else{
+				socket.socketWatcher.broadcast <- message
+			}
 		*/
 	}
 }
@@ -124,4 +124,3 @@ func (socket *Socket) sendOutgoingMessages() {
 		}
 	}
 }
-
