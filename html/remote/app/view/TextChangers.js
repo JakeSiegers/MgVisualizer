@@ -148,6 +148,37 @@ Ext.define('MG.view.TextChangers', {
 							text: 'Send'
 						}
 					]
+				},
+				{
+					xtype: 'container',
+					defaults: {
+						margin: 5
+					},
+					layout: {
+						type: 'hbox',
+						align: 'stretch'
+					},
+					items: [
+						{
+							xtype: 'textfield',
+							fieldLabel: 'Twitch Remote URL',
+							labelWidth:150,
+							itemId:'twitchRemoteUrl'
+						},
+						{
+							xtype: 'textfield',
+							fieldLabel: 'Client Id',
+							itemId:'twitchClientId'
+						},
+						{
+							xtype: 'button',
+							text: 'Connect',
+							listeners:{
+								afterrender:'checkTwitchLocalStorage',
+								click:'connectToTwitch'
+							}
+						}
+					]
 				}
 			]
 		},
@@ -165,6 +196,39 @@ Ext.define('MG.view.TextChangers', {
 		}
 
 	],
+	checkTwitchLocalStorage:function(){
+		console.log('check twitch localstorage');
+		var twitchRemoteUrl = window.localStorage.getItem('twitchRemoteUrl');
+		var twitchClientId = window.localStorage.getItem('twitchClientId');
+		this.queryById('twitchRemoteUrl').setValue(twitchRemoteUrl);
+		this.queryById('twitchClientId').setValue(twitchClientId);
+
+	},
+	connectToTwitch:function(){
+		var twitchRemoteUrl = this.queryById('twitchRemoteUrl').getValue();
+		var twitchClientId = this.queryById('twitchClientId').getValue();
+		if(twitchRemoteUrl.trim() === '' || twitchClientId.trim() === ''){
+			return;
+		}
+		console.log(twitchRemoteUrl,twitchClientId);
+		window.localStorage.setItem('twitchRemoteUrl',twitchRemoteUrl);
+		window.localStorage.setItem('twitchClientId',twitchClientId);
+		let connectionMonitor = Ext.ComponentQuery.query('#connectionMonitor')[0];
+		connectionMonitor.currentClientId = twitchClientId;
+		if(twitchSocket !== null) {
+			twitchSocket.close();
+			delete twitchSocket;
+		}
+		connectionMonitor.twitchClosed();
+		twitchSocket = new SocketHelper({
+			url:twitchRemoteUrl,
+			onConnect:connectionMonitor.twitchConnected,
+			onClose:connectionMonitor.twitchClosed,
+			onMessage:connectionMonitor.twitchMessage,
+			scope:connectionMonitor
+		});
+		twitchSocket.connect();
+	},
 	onComboboxAfterRender: function(component, eOpts) {
 		var times = [];
 		for(var i = 10*1000;i<=30*60*1000;i+=10*1000){

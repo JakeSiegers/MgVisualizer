@@ -1,7 +1,9 @@
 var localSocket = null;
 var obsSocket = null;
+var twitchSocket = null;
 
 Ext.define('MG.view.ConnectionMonitor', {
+	itemId:'connectionMonitor',
 	extend: 'Ext.container.Container',
 	alias: 'widget.connectionmonitor',
 	requires: [
@@ -75,7 +77,7 @@ Ext.define('MG.view.ConnectionMonitor', {
 						'status',
 						'statusRed'
 					],
-					html: 'Twitch Socket',
+					html: 'Twitch Socket <span id="queueCount"></span>',
 					itemId: 'twitchSocketStats'
 				}
 			]
@@ -107,7 +109,7 @@ Ext.define('MG.view.ConnectionMonitor', {
 		var localSocketStatus = this.queryById('localSocketStatus');
 		localSocketStatus.removeCls('statusRed');
 		localSocketStatus.addCls('statusGreen');
-		localSocket.send({action:'play',to:'stream',value:'Snails House - Sunday [Ordinary Songs 4].mp3'});
+		//localSocket.send({action:'play',to:'stream',value:'Snails House - Sunday [Ordinary Songs 4].mp3'});
 	},
 	localClosed:function(){
 		var localSocketStatus = this.queryById('localSocketStatus');
@@ -189,12 +191,56 @@ Ext.define('MG.view.ConnectionMonitor', {
 					break;
 			}
 		}
-
-
-		/*
-		{
-			"update-type": "RecordingStarting"
+	},
+	twitchConnected:function(){
+		console.log('connected!');
+		var twitchSocketStats = this.queryById('twitchSocketStats');
+		twitchSocketStats.removeCls('statusRed');
+		twitchSocketStats.addCls('statusGreen');
+	},
+	twitchClosed:function(){
+		var twitchSocketStats = this.queryById('twitchSocketStats');
+		twitchSocketStats.removeCls('statusGreen');
+		twitchSocketStats.addCls('statusRed');
+	},
+	twitchMessage:function(message){
+		console.log(message);
+		if(message.action === 'userFollow'){
+			this.sendFollowNotification(message.userId);
 		}
-		*/
+	},
+	sendFollowNotification:function(userId){
+		if(!this.followBuffer){
+			this.followBuffer = [];
+		}
+		this.followBuffer.push(userId);
+		this.processFollowBuffer();
+	},
+	processFollowBuffer:function(){
+		if(this.lastSent && Math.abs(new Date() - this.lastSent)/1000 < 2.5){
+			setTimeout(this.processFollowBuffer.bind(this),100);
+			return;
+		}
+		if(this.followBuffer.length === 0){
+			return;
+		}
+		this.lastSent = new Date();
+		var nextId = this.followBuffer.shift();
+		document.getElementById('queueCount').innerHTML = this.followBuffer.length;
+		Ajax.request({
+			url: 'https://api.twitch.tv/helix/users?id='+nextId,
+			headers: {
+				'Client-ID': this.currentClientId
+			},
+			method: 'GET',
+			success: function (reply) {
+				localSocket.send({
+					to: 'stream',
+					action: 'notification',
+					text:reply.data[0].display_name+' Just Followed!',
+					time: 1500
+				});
+			}
+		});
 	}
 });

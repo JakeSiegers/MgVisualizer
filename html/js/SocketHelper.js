@@ -1,12 +1,13 @@
 class SocketHelper{
     constructor(config){
-        this.conn = null;
+        this.websocket = null;
 	    this.connected = false;
+	    this.conenctRetry = true;
 	    this.connectionAttempts = 0;
 	    this.maxConnectionAttempts = 30;
 	    this.connectionAttemptDelay = 5000;
 	    this.messageId = 1;
-        this.config = {
+        let defaults = {
 	        url:'',
 		    onConnect:function(){console.log("Connection Opened");},
 		    onClose:function(){console.log("Connection Closed");},
@@ -18,9 +19,21 @@ class SocketHelper{
 	    };
 
         this.promises = {};
-
-	    Object.assign(this.config,config);
+	    this.config = this.overrideDefaults(config,defaults);
     }
+
+	overrideDefaults(input,defaults) {
+		let keys = Object.keys(defaults);
+		for (let i = 0; i < keys.length; i++) {
+			if(!input.hasOwnProperty(keys[i])){
+				input[keys[i]] = defaults[keys[i]];
+			}else if(typeof defaults[keys[i]] === 'object' && keys[i] !== 'scope'){
+				console.log(keys[i]);
+				input[keys[i]] = this.overrideDefaults(input[keys[i]],defaults[keys[i]]);
+			}
+		}
+		return input;
+	};
 
     connect(){
         if(!window["WebSocket"]) {
@@ -36,18 +49,20 @@ class SocketHelper{
 		    this.config.onErrorMessage.call(this.config.scope,{error:'Failed to connect to server after '+this.maxConnectionAttempts+' tries!'});
 		    return;
 	    }
-        this.conn = new WebSocket("ws://"+this.config.url);
-        this.conn.onopen = function(e){
+        this.websocket = new WebSocket("ws://"+this.config.url);
+        this.websocket.onopen = function(e){
         	this.connected = true;
 	        this.connectionAttempts = 0;
             this.config.onConnect.call(this.config.scope);
         }.bind(this);
-        this.conn.onclose = function(e) {
+        this.websocket.onclose = function(e) {
 	        this.connected = false;
 	        this.config.onClose.call(this.config.scope);
-	        setTimeout(this.connect.bind(this),this.connectionAttemptDelay);
+	        if(this.conenctRetry) {
+		        setTimeout(this.connect.bind(this), this.connectionAttemptDelay);
+	        }
         }.bind(this);
-        this.conn.onmessage = this.onMessage.bind(this);
+        this.websocket.onmessage = this.onMessage.bind(this);
     }
 
     onMessage(event){
@@ -84,7 +99,7 @@ class SocketHelper{
 		    message[this.config.messageIdKey] = messageId;
 		    this.messageId++;
 		    this.promises[messageId] = {resolve, reject};
-		    this.conn.send(JSON.stringify(message));
+		    this.websocket.send(JSON.stringify(message));
 	    })
     }
 
@@ -99,8 +114,13 @@ class SocketHelper{
 	    }
 	    message[this.config.messageIdKey] = messageId;
 	    this.messageId++;
-        this.conn.send(JSON.stringify(message));
+        this.websocket.send(JSON.stringify(message));
         return messageId;
+    }
+
+    close(){
+	    this.conenctRetry = false;
+	    this.websocket.close();
     }
 }
 

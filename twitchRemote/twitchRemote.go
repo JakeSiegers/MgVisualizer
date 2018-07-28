@@ -10,6 +10,7 @@ import (
 	"log"
 	"net/http"
 	"time"
+	"encoding/json"
 )
 
 const (
@@ -38,6 +39,10 @@ var (
 	upgrader = websocket.Upgrader{
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
+		CheckOrigin: func(r *http.Request) bool {
+			//Allow any origin! (Cross origin)
+			return true
+		},
 	}
 	socketWatcher *SocketWatcher
 	secret        = ""
@@ -128,6 +133,22 @@ func substr(s string, pos, length int) string {
 }
 
 func (socketWatcher *SocketWatcher) run() {
+	/*
+	ticker := time.NewTicker(5 * time.Second)
+	quit := make(chan struct{})
+	go func() {
+		for {
+			select {
+			case <- ticker.C:
+				socketWatcher.broadcast <- "44322889"
+			case <- quit:
+				ticker.Stop()
+				return
+			}
+		}
+	}()
+	*/
+
 	for {
 		select {
 		case client := <-socketWatcher.register:
@@ -140,7 +161,10 @@ func (socketWatcher *SocketWatcher) run() {
 			}
 			break
 		case message := <-socketWatcher.broadcast:
-			log.Println(message)
+			messageObj := map[string]string{"action":"userFollow","userId":message}
+			jsonStr, _ := json.Marshal(messageObj)
+			message = string(jsonStr)
+			log.Println("Brodcast: "+message)
 			for socket := range socketWatcher.sockets {
 				select {
 				case socket.send <- message:

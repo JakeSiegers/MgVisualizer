@@ -12,6 +12,9 @@
 			let clientId = document.getElementById('clientId').value;
 			let secret = document.getElementById('secret').value;
 			let callbackUrl = document.getElementById('callbackUrl').value;
+			let unsub = document.getElementById('unsub').checked;
+
+			console.log(unsub);
 
 			if(user.trim().length === 0 || clientId.trim().length === 0 || secret.trim().length === 0 || callbackUrl.trim().length === 0){
 				alert('Cannot Leave any fields blank!');
@@ -25,20 +28,20 @@
 				method: 'GET',
 				success: function (reply) {
 					let id = reply.data[0].id;
-					subscribeToTwitchWebHook(clientId,id,secret,callbackUrl);
+					subscribeToTwitchWebHook(clientId,id,secret,callbackUrl,unsub);
 				}
 			});
 		}
 
-		function subscribeToTwitchWebHook(clientId,id,secret,callbackUrl){
+		function subscribeToTwitchWebHook(clientId,id,secret,callbackUrl,unsub){
 			Ajax.request({
 				url:'https://api.twitch.tv/helix/webhooks/hub',
 				headers:{
 					'Client-ID':clientId
 				},
 				params:{
-					"hub.mode":"subscribe",
-					"hub.topic":"https://api.twitch.tv/helix/users/follows?first=1&from_id="+id,
+					"hub.mode":unsub?"unsubscribe":"subscribe",
+					"hub.topic":"https://api.twitch.tv/helix/users/follows?first=1&to_id="+id,
 					"hub.callback":callbackUrl,
 					"hub.lease_seconds":"86400",
 					"hub.secret": secret
@@ -57,6 +60,7 @@
 	Client Id:<input type="text" id="clientId"/><br />
 	Secret:<input type="text" id="secret"/><br />
 	CallbackUrl<input type="text" id="callbackUrl"/><br />
+	Unsub<input type="checkbox" id="unsub"/><br />
 	<button onclick="submit();">Send</button>
 </body>
 </html>
