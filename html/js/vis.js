@@ -85,16 +85,16 @@ class MgVisualizer{
 		this.musicQueue = [];
 		this.currentSong = 0;
 		this.loadingSong = false;
-
+		this.renderVisualizer = false;
+		this.stopped = true;
 		this.startTime = 0;
 		this.pauseTime = 0;
 		this.paused = false;
 		this.flowIn = false;
-		this.musicPlaying = false;
 
 		this.mgColors = [
-			{r:255,g:0,b:0},
-			{r:255,g:255,b:0},
+			{r:244,g:67,b:54},
+			{r:255,g:255,b:59},
 			{r:255,g:255,b:255}
 		];
 
@@ -151,11 +151,45 @@ class MgVisualizer{
 
 	socketMessageReceived(message){
 		switch(message.action) {
-			case 'play':
+			case 'playSong':
 				this.loadSongViaAjax(message.value);
+				break;
+			case 'play':
+				//fade in music, start visuals
+				Ajax.request({
+					url:'/api/getMusicQueue',
+					success:function(reply){
+						console.log(reply);
+						this.musicQueue = reply.musicQueue;
+						this.currentSong = 0;
+						this.loadSongViaAjax(this.musicQueue[0]);
+					},
+					scope:this
+				});
+				break;
+			case 'stop':
+				this.stopMusicAndVisualizer();
 				break;
 			case 'notification':
 				this.notification.displayNotification(message);
+				break;
+			case 'setMusicQueue':
+				this.musicQueue = message.queue;
+				console.log(this.musicQueue);
+				break;
+			case 'setTimer':
+				this.streamTimer.setTime(message.time);
+				break;
+			case 'stopTimer':
+				this.streamTimer.stopTimer();
+				break;
+			case 'switchToGame':
+				this.streamTimer.stopTimer();
+				this.ticker.hide();
+				this.stopMusicAndVisualizer();
+				break;
+			case 'updateText':
+				this.ticker.setText(message.text);
 				break;
 			default:
 				console.error('Unknown action "'+message.action+'"');
@@ -195,6 +229,7 @@ class MgVisualizer{
 	};
 
 	loadSongFromBrowse(file){
+		this.stop();
 		this.loadingSong = true;
 		let dot = file.name.lastIndexOf('.');
 		if(dot !== -1){
@@ -202,7 +237,6 @@ class MgVisualizer{
 		}else{
 			this.ticker.setSong(file.name);
 		}
-		this.stop();
 		let reader = new FileReader();
 		reader.onload = function() {
 			this.audioCtx.decodeAudioData(reader.result, function(newBuffer){
@@ -215,15 +249,13 @@ class MgVisualizer{
 	}
 
 	loadSongViaAjax(url){
-
+		this.stop();
 		let dot = url.lastIndexOf('.');
 		if(dot !== -1){
 			this.ticker.setSong(url.substring(0,dot));
 		}else{
 			this.ticker.setSong(url);
 		}
-
-		this.stop();
 		let xhr = new XMLHttpRequest();
 		xhr.responseType = 'arraybuffer';
 		xhr.onreadystatechange = function(){
@@ -244,6 +276,10 @@ class MgVisualizer{
 	}
 
 	play(){
+		if(this.stopTimeout){
+			this.stopTimeout.destroy();
+		}
+
 		let offset = this.pauseTime;
 		//beatContext = new window.AudioContext();
 		this.beatSource = this.audioCtx.createBufferSource();
@@ -276,21 +312,26 @@ class MgVisualizer{
 		this.pauseTime = 0;
 		this.paused = false;
 		this.loadingSong = false;
+		this.renderVisualizer = true;
+		this.stopped = false;
+
+		this.canvas.style.opacity = 1;
 
 		this.musicSource.onended = function(){
-			if(this.loadingSong){
+			if(this.loadingSong || this.stopped){
 				return;
 			}
 			this.currentSong++;
 			if(this.currentSong >= this.musicQueue.length){
-				//NO Playlist looping for now!
-				//this.currentSong = 0;
-			}else {
-				this.loadSong(this.musicQueue[this.currentSong]);
+				this.currentSong = 0;
+			}
+
+			if(this.websocketMode){
+				this.loadSongViaAjax(this.musicQueue[this.currentSong]);
+			}else{
+				this.loadSongFromBrowse(this.musicQueue[this.currentSong]);
 			}
 		}.bind(this);
-
-		this.musicPlaying = true;
 	}
 
 	pause(){
@@ -306,18 +347,36 @@ class MgVisualizer{
 	}
 
 	stop(){
-		this.musicPlaying = false;
+		this.stopped = true;
 		this.paused = false;
 		if(this.musicSource){
-			this.musicSource.disconnect();
+			//this.musicSource.disconnect();
 			this.musicSource.stop();
-			this.musicSource = null;
-			this.beatSource.disconnect();
+			//this.musicSource = null;
+			//this.beatSource.disconnect();
 			this.beatSource.stop();
-			this.beatSource = null;
+			//this.beatSource = null;
 		}
 		this.pauseTime = 0;
 		this.startTime = 0;
+		this.ticker.setSong('');
+	}
+
+	stopMusicAndVisualizer(){
+		this.stop();
+		if(this.stopTimeout){
+			this.stopTimeout.destroy();
+		}
+		this.stopTimeout = new JakeTween({
+			on:this.canvas.style,
+			to:{opacity:0},
+			scope:this,
+			onComplete:function(){
+				this.canvasCtx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+				//this.canvas.style.opacity = 0;
+				this.renderVisualizer = false;
+			}
+		}).start();
 	}
 
 	draw(time) {
@@ -326,15 +385,20 @@ class MgVisualizer{
 		JakeTween.update();
 		this.ticker.draw();
 		this.notification.draw();
+		this.streamTimer.draw();
 		this.drawVisuals();
 		requestAnimationFrame(this.draw.bind(this));
 		this.stats.end();
 	}
 
 	drawVisuals(){
-		if(this.paused || !this.musicPlaying){
+		if(!this.renderVisualizer){
 			return;
 		}
+
+		//if(this.paused || !this.musicPlaying){
+		//	return;
+		//}
 
 		this.musicAnalyser.getByteTimeDomainData(this.dataArray);
 		this.beatAnalyser.getByteTimeDomainData(this.lowPassDataArray);
@@ -368,24 +432,28 @@ class MgVisualizer{
 
 		let rgb = 'rgb('+r+','+g+','+b+')';
 
-		this.drawCircle(rgb,this.dataArray);
-
 		this.canvasCtx.fillStyle = '#ffffff';
 
 		let logoX = this.canvas.width/2;//Math.sin(rot)*200+canvas.height/2;
 		let logoY = this.canvas.height/2;//Math.sin(rot)*200+canvas.height/2;
 
+
+		//this.drawCircle(rgb,this.dataArray);
 		this.mgBgBorder.setConfigs({
-			drawX:logoX,
-			drawY:logoY,
-			scale:logoBeatValSmoothed+1,
-			color:rgb,
-			angle:this.logoRotation,
-			fill:false
+			drawX: logoX,
+			drawY: logoY,
+			scale: logoBeatValSmoothed + 1,
+			color: rgb,
+			angle: this.logoRotation,
+			fill: false
 		}).draw();
+
 
 		let fadeSpeed = Math.abs(this.beatValSmoothed)*30+5;
 		//fadeSpeed = 15;
+		if(this.stopped){
+			fadeSpeed = 30;
+		}
 		if(this.flowIn){
 			this.canvasCtx.drawImage(this.canvasCtx.canvas, 0, 0, this.canvas.width, this.canvas.height, fadeSpeed, fadeSpeed, this.canvas.width - fadeSpeed*2, this.canvas.height - fadeSpeed*2);
 		}else{

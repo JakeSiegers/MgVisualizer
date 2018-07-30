@@ -46,6 +46,7 @@ func (socketWatcher *SocketWatcher) run() {
 			case client := <-socketWatcher.unregister:
 				if _, ok := socketWatcher.sockets[client]; ok {
 					delete(socketWatcher.sockets, client)
+					delete(socketWatcher.labeledSockets,client.user)
 					close(client.send)
 				}
 				break

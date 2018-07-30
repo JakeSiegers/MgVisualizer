@@ -33,6 +33,12 @@ func openWebSocket(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 	user := params[0]
+	if _, ok := socketWatcher.labeledSockets[user]; ok {
+		log.Println(user+" already exists!")
+		http.Error(response, "User Already Exists", http.StatusBadRequest)
+		return
+	}
+
 	log.Println(user+" connected!")
 
 	connection, upgradeError := upgrader.Upgrade(response, request, nil)
@@ -41,8 +47,8 @@ func openWebSocket(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 	socket := &Socket{connection: connection, send: make(chan string),user:user}
-	socketWatcher.register <- socket
 
+	socketWatcher.register <- socket
 	go socket.sendOutgoingMessages()
 	go socket.readIncomingMessages()
 }
@@ -52,14 +58,12 @@ func api(response http.ResponseWriter, request *http.Request){
 	action := string(urlRune[5:])
 	output := make(map[string]interface{}) //interface is any data type
 	switch action {
-	case "getMusic":
-		output["music"] = getMusic()
+	case "getMusicGrid":
+		output["music"] = getMusicGrid()
+	case "getMusicQueueGrid":
+		output["musicQueue"] = getMusicQueueGrid()
 	case "getMusicQueue":
-		queueGrid := make([][]string,0)
-		for _,item := range musicQueue{
-			queueGrid = append(queueGrid, []string{item})
-		}
-		output["musicQueue"] = queueGrid
+		output["musicQueue"] = musicQueue
 	case "setMusicQueue":
 		setMusicQueue(request)
 	default:
@@ -86,7 +90,7 @@ func outputError(response http.ResponseWriter,message string,output map[string]i
 	json.NewEncoder(response).Encode(output)
 }
 
-func getMusic() [][]string{
+func getMusicGrid() [][]string{
 	files, err := ioutil.ReadDir("./html/music")
 	if err != nil {
 		log.Fatal(err)
@@ -99,6 +103,14 @@ func getMusic() [][]string{
 		}
 	}
 	return music
+}
+
+func getMusicQueueGrid() [][]string{
+	queueGrid := make([][]string,0)
+	for _,item := range musicQueue{
+		queueGrid = append(queueGrid, []string{item})
+	}
+	return queueGrid
 }
 
 func setMusicQueue( request *http.Request){

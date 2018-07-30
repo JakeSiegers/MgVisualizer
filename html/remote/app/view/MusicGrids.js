@@ -64,7 +64,7 @@ Ext.define('MG.view.MusicGrids', {
 			},
 			afterrender:function(gridWrap){
 				Ajax.request({
-					url: '/api/getMusic',
+					url: '/api/getMusicGrid',
 					success: function (reply) {
 						allMusicStore.loadData(reply.music);
 					},
@@ -72,7 +72,7 @@ Ext.define('MG.view.MusicGrids', {
 				});
 
 				Ajax.request({
-					url: '/api/getMusicQueue',
+					url: '/api/getMusicQueueGrid',
 					success: function (reply) {
 						musicQueueStore.loadData(reply.musicQueue);
 						this.currentQueue = [];

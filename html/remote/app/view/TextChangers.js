@@ -35,6 +35,7 @@ Ext.define('MG.view.TextChangers', {
 							queryMode: 'local',
 							store: 'TimeStore',
 							valueField: 'seconds',
+							itemId: 'timePicker',
 							listeners: {
 								afterrender: 'onComboboxAfterRender'
 							}
@@ -42,18 +43,18 @@ Ext.define('MG.view.TextChangers', {
 						{
 							xtype: 'button',
 							iconCls: '',
-							text: 'Start Timer'
+							text: 'Start Timer',
+							listeners:{
+								click:'startTimer'
+							}
 						},
 						{
 							xtype: 'button',
-							text: 'Stop Timer'
+							text: 'Stop Timer',
+							listeners:{
+								click:'stopTimer'
+							}
 						},
-						{
-							xtype: 'displayfield',
-							height: 20,
-							fieldLabel: 'Timer:',
-							value: '00:00'
-						}
 					]
 				},
 				{
@@ -69,11 +70,22 @@ Ext.define('MG.view.TextChangers', {
 						{
 							xtype: 'textfield',
 							fieldLabel: 'Primary Text',
-							emptyText: 'MG @ Smashcon'
+							emptyText: 'MG @ Smashcon',
+							itemId:'primaryText'
 						},
 						{
 							xtype: 'button',
-							text: 'Update Text'
+							text: 'Update Text',
+							listeners:{
+								click:'updateText'
+							}
+						},
+						{
+							xtype: 'button',
+							text: 'Reset Text',
+							listeners:{
+								click:'resetText'
+							}
 						}
 					]
 				},
@@ -244,5 +256,21 @@ Ext.define('MG.view.TextChangers', {
 			localSocket.send({to: 'stream', action: 'notification', text:notificationText, time: 5000});
 			this.queryById('notificationText').setValue('');
 		}
+	},
+	startTimer:function(){
+		let time = this.queryById('timePicker').getValue();
+		if(time > 0) {
+			localSocket.send({to: 'stream', action: 'setTimer', time: time});
+		}
+	},
+	stopTimer:function(){
+		localSocket.send({to: 'stream', action: 'stopTimer'});
+	},
+	updateText:function(){
+		let primaryText = this.queryById('primaryText').getValue();
+		localSocket.send({to: 'stream', action: 'updateText',text:primaryText});
+	},
+	resetText:function(){
+		localSocket.send({to: 'stream', action: 'updateText',text:'McLeodGaming @ Smash Con 2018'});
 	}
 });

@@ -104,7 +104,6 @@ class StreamNotification{
 		this.ctx.clip();
 		this.ctx.font = 'bold 20px Arial';
 		this.ctx.fillStyle = 'rgb(255,255,255)';
-		this.ctx.textAlign = 'center';
 		this.ctx.textBaseline= 'middle';
 		let text = this.currentText;
 		let textWithSpacer = this.currentText+"  ";
@@ -112,6 +111,7 @@ class StreamNotification{
 			this.ctx.textAlign = 'left';
 			this.ctx.fillText(textWithSpacer+textWithSpacer, this.canvas.width/2-(this.width/2)-(this.ctx.measureText(textWithSpacer).width*this.scrollPosition),this.canvas.height/2 - 300);
 		}else {
+			this.ctx.textAlign = 'center';
 			this.ctx.fillText(text, this.canvas.width / 2, this.canvas.height / 2 - 300);
 		}
 		this.ctx.restore();

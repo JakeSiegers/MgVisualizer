@@ -43,6 +43,7 @@ Ext.define('MG.view.Buttons', {
 					listeners:{
 						click:function(){
 							obsSocket.send({"request-type":"SetCurrentScene","scene-name":'ssf2'});
+							localSocket.send({"action":"switchToGame","to":'stream'});
 						},
 						scope:this
 					}
@@ -73,12 +74,24 @@ Ext.define('MG.view.Buttons', {
 				{
 					xtype: 'button',
 					flex: 1,
-					text: 'PLAY MUSIC'
+					text: 'PLAY MUSIC',
+					listeners:{
+						click:function(){
+							localSocket.send({"action":"play","to":"stream"});
+						},
+						scope:this
+					}
 				},
 				{
 					xtype: 'button',
 					flex: 1,
-					text: 'PAUSE MUSIC'
+					text: 'STOP MUSIC',
+					listeners:{
+						click:function(){
+							localSocket.send({"action":"stop","to":"stream"});
+						},
+						scope:this
+					}
 				},
 				{
 					xtype: 'button',

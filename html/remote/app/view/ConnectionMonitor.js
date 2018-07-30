@@ -128,7 +128,7 @@ Ext.define('MG.view.ConnectionMonitor', {
 			}
 
 			var shaObj = new jsSHA("SHA-256", "TEXT");
-			shaObj.update('test test test');
+			shaObj.update('test');
 			shaObj.update(salt);
 			var hash = shaObj.getHash("B64");
 			var authHash = new jsSHA("SHA-256", "TEXT");

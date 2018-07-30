@@ -19,6 +19,7 @@ class JakeTween{
 		this.startValues = {};
 		JakeTween.tweens[this.id] = this;
 		this.started = false;
+		this.destroyMe = false;
 		return this;
 	}
 
@@ -40,7 +41,14 @@ class JakeTween{
 		this.started = false;
 	}
 
+	destroy(){
+		this.destroyMe = true;
+	}
+
 	update(){
+		if(this.destroyMe && !this.config.neverDestroy){
+			return false;
+		}
 		if(!this.started){
 			return true;
 		}
