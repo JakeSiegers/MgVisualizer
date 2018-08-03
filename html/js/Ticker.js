@@ -12,7 +12,7 @@ class Ticker{
 			loop:true,
 			neverDestroy:true
 		}).start();
-		this.scale = 0;
+		this.scale = 1;
 		this.width = 550;
 		this.height = 60;
 		this.frame = new PathDrawer({
@@ -23,7 +23,7 @@ class Ticker{
 			drawY: this.canvas.height/2+225,
 			lineWidth:2
 		});
-		this.primaryTextYPosition = this.canvas.height/2+215;
+		this.primaryTextYPosition = this.canvas.height/2+225;
 		this.primaryText = 'McLeodGaming @ Smash Con 2018';
 	}
 
@@ -113,7 +113,7 @@ class Ticker{
 
 		//this.ctx.fillText(songText, this.canvas.width/2,this.canvas.height/2+242);
 
-		this.ctx.font = 'bold 30px Arial';
+		this.ctx.font = '900 30px "Roboto"';
 		if(this.ctx.measureText(text).width > this.width){
 			this.ctx.textAlign = 'left';
 			this.ctx.fillText(textWithSpacer+textWithSpacer,this.canvas.width/2-(this.width/2)-(this.ctx.measureText(textWithSpacer).width*this.scrollPosition),this.primaryTextYPosition);
@@ -123,7 +123,7 @@ class Ticker{
 		}
 
 		if(this.song.length > 0) {
-			this.ctx.font = 'bold 18px Arial';
+			this.ctx.font = '400 18px "Roboto"';
 			if (this.ctx.measureText(songText).width > this.width) {
 				this.ctx.textAlign = 'left';
 				this.ctx.fillText(songTextWithSpacer + songTextWithSpacer, this.canvas.width / 2 - (this.width / 2) - (this.ctx.measureText(songTextWithSpacer).width * this.scrollPosition), this.canvas.height / 2 + 242);

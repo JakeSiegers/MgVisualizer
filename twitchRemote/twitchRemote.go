@@ -3,6 +3,7 @@ package main
 import (
 	"crypto/hmac"
 	"crypto/sha256"
+	"encoding/json"
 	"fmt"
 	"github.com/gorilla/websocket"
 	"github.com/tidwall/gjson"
@@ -10,7 +11,6 @@ import (
 	"log"
 	"net/http"
 	"time"
-	"encoding/json"
 )
 
 const (
@@ -57,7 +57,8 @@ func main() {
 
 	socketWatcher = newSocketWatcher()
 	go socketWatcher.run()
-	http.Handle("/", http.FileServer(http.Dir("../html")))
+	//No html endpoint needed
+	//http.Handle("/", http.FileServer(http.Dir("../html")))
 	http.HandleFunc("/api/", httpHandler)
 	http.HandleFunc("/webSocket", func(response http.ResponseWriter, request *http.Request) {
 		openWebSocket(response, request)
@@ -134,19 +135,19 @@ func substr(s string, pos, length int) string {
 
 func (socketWatcher *SocketWatcher) run() {
 	/*
-	ticker := time.NewTicker(5 * time.Second)
-	quit := make(chan struct{})
-	go func() {
-		for {
-			select {
-			case <- ticker.C:
-				socketWatcher.broadcast <- "44322889"
-			case <- quit:
-				ticker.Stop()
-				return
+		ticker := time.NewTicker(5 * time.Second)
+		quit := make(chan struct{})
+		go func() {
+			for {
+				select {
+				case <- ticker.C:
+					socketWatcher.broadcast <- "44322889"
+				case <- quit:
+					ticker.Stop()
+					return
+				}
 			}
-		}
-	}()
+		}()
 	*/
 
 	for {
@@ -161,10 +162,10 @@ func (socketWatcher *SocketWatcher) run() {
 			}
 			break
 		case message := <-socketWatcher.broadcast:
-			messageObj := map[string]string{"action":"userFollow","userId":message}
+			messageObj := map[string]string{"action": "userFollow", "userId": message}
 			jsonStr, _ := json.Marshal(messageObj)
 			message = string(jsonStr)
-			log.Println("Brodcast: "+message)
+			log.Println("Brodcast: " + message)
 			for socket := range socketWatcher.sockets {
 				select {
 				case socket.send <- message:

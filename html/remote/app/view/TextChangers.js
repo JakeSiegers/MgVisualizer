@@ -70,7 +70,7 @@ Ext.define('MG.view.TextChangers', {
 						{
 							xtype: 'textfield',
 							fieldLabel: 'Primary Text',
-							emptyText: 'MG @ Smashcon',
+							emptyText: 'McLeodGaming @ Smash Con 2018',
 							itemId:'primaryText'
 						},
 						{
@@ -268,6 +268,9 @@ Ext.define('MG.view.TextChangers', {
 	},
 	updateText:function(){
 		let primaryText = this.queryById('primaryText').getValue();
+		if(primaryText.trim() === ''){
+			primaryText = 'McLeodGaming @ Smash Con 2018';
+		}
 		localSocket.send({to: 'stream', action: 'updateText',text:primaryText});
 	},
 	resetText:function(){

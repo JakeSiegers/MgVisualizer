@@ -119,7 +119,7 @@ class MiniTicker{
 		this.notificationPosition = 0;
 		new JakeTween({
 			on:this,
-			to:{notificationYPosition:this.y+this.height/4,primaryTextYPosition:this.y-this.height/4},
+			to:{notificationYPosition:this.y+this.height/4,primaryTextYPosition:this.y-this.height/5},
 			time:500,
 			ease:JakeTween.easing.exponential.out,
 			onComplete:function(){
@@ -168,7 +168,7 @@ class MiniTicker{
 		this.ctx.fillStyle = 'rgb(255,255,255)';
 		this.ctx.textBaseline= 'middle';
 
-		this.ctx.font = 'bold 25px Arial';
+		this.ctx.font = '900 25px Roboto';
 		if(this.ctx.measureText(text).width > this.width){
 			this.ctx.textAlign = 'left';
 			this.ctx.fillText(textWithSpacer+textWithSpacer,this.x-(this.width/2)-(this.ctx.measureText(textWithSpacer).width*this.scrollPosition),this.primaryTextYPosition);
@@ -180,7 +180,7 @@ class MiniTicker{
 		let notificationTextWithSpacer = this.notificationText+spacer;
 
 		//if(this.notification.length > 0) {
-			this.ctx.font = 'bold 18px Arial';
+			this.ctx.font = '400 18px Roboto';
 			if (this.ctx.measureText(this.notificationText).width > this.width) {
 				this.ctx.textAlign = 'left';
 				this.ctx.fillText(notificationTextWithSpacer + notificationTextWithSpacer, this.x - (this.width / 2) - (this.ctx.measureText(notificationTextWithSpacer).width * this.scrollPosition), this.notificationYPosition);

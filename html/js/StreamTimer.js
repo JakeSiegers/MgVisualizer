@@ -44,7 +44,7 @@ class StreamTimer{
 			on:this,
 			to:{scale:1},
 			time:500,
-			ease:JakeTween.easing.quadratic.out
+			ease:JakeTween.easing.exponential.out
 		}).start();
 	}
 
@@ -53,7 +53,7 @@ class StreamTimer{
 			on:this,
 			to:{scale:0},
 			time:500,
-			ease:JakeTween.easing.quadratic.out,
+			ease:JakeTween.easing.exponential.out,
 			onComplete:function(){
 				this.hideTimer = true;
 			}
@@ -76,16 +76,16 @@ class StreamTimer{
 		let totalSeconds = timeLeft/1000;
 		let minutes = Math.floor(totalSeconds/60);
 		let seconds = Math.floor(totalSeconds%60);
-		let miliseconds = Math.floor(timeLeft%1000);
+		let miliseconds = Math.floor(timeLeft%1000/10);
 		if(minutes < 10){
 			minutes = "0"+minutes;
 		}
 		if(seconds < 10){
 			seconds = "0"+seconds;
 		}
-		if(miliseconds < 100){
-			miliseconds = "0"+miliseconds;
-		}
+		//if(miliseconds < 100){
+		//	miliseconds = "0"+miliseconds;
+		//}
 		if(miliseconds < 10){
 			miliseconds = "0"+miliseconds;
 		}
@@ -103,7 +103,7 @@ class StreamTimer{
 			fill:false,
 		}).draw();
 		this.ctx.clip();
-		this.ctx.font = 'bold 40px Lucida Console';
+		this.ctx.font = '900 40px "Roboto Mono"';
 		this.ctx.fillStyle = 'rgb(255,255,255)';
 		this.ctx.textBaseline= 'middle';
 		this.ctx.textAlign = 'center';

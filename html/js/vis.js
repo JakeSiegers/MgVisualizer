@@ -35,6 +35,8 @@ class MgVisualizer{
 		//this.canvasCtx.fillStyle = 'rgb(0, 0, 0)';
 		//this.canvasCtx.fillRect(0, 0, this.canvas.width,  this.canvas.height);
 
+		this.canvasOpacity = 1;
+
 		this.overlayCanvas = document.querySelector('.overlay');
 		this.overlayCtx = this.overlayCanvas.getContext("2d");
 		//this.overlayCtx.fillStyle = 'rgb(0, 0, 0)';
@@ -81,7 +83,6 @@ class MgVisualizer{
 			lineWidth:20
 		});
 
-		this.alreadyDrawing = false;
 
 		this.stats = new Stats();
 		//document.body.appendChild( this.stats.dom );
@@ -146,8 +147,8 @@ class MgVisualizer{
 		this.beatValTween = new JakeTween({
 			on:this,
 			to:{beatValSmoothed:0},
-			time:50,
-			ease:JakeTween.easing.linear,
+			time:100,
+			ease:JakeTween.easing.quadratic.out,
 			neverDestroy:true
 		});
 
@@ -178,7 +179,7 @@ class MgVisualizer{
 					success:function(reply){
 						this.musicQueue = reply.musicQueue;
 						this.currentSong = 0;
-						this.loadSongViaAjax(this.musicQueue[0]);
+						this.loadSongViaAjax(this.musicQueue[this.currentSong]);
 					},
 					scope:this
 				});
@@ -205,6 +206,7 @@ class MgVisualizer{
 			case 'switchToMusic':
 				this.currentScene = 'music';
 				this.miniTicker.hide();
+				this.ticker.show();
 				this.logoRotation = 0;
 				new JakeTween({
 					on:this,
@@ -212,6 +214,17 @@ class MgVisualizer{
 					time:500,
 					ease:JakeTween.easing.back.out
 				}).start();
+				Ajax.request({
+					url:'/api/getMusicQueue',
+					success:function(reply){
+						this.musicQueue = reply.musicQueue;
+						if(this.musicQueue.length > 0){
+							this.currentSong = Math.floor(Math.random()*this.musicQueue.length);
+							this.loadSongViaAjax(this.musicQueue[this.currentSong]);
+						}
+					},
+					scope:this
+				});
 				break;
 			case 'switchToGame':
 				this.currentScene = 'ssf2';
@@ -219,12 +232,6 @@ class MgVisualizer{
 				this.ticker.hide();
 				this.stopMusicAndVisualizer();
 				this.miniTicker.show();
-				new JakeTween({
-					on:this,
-					to:{logoSubtractScale:1,logoRotation:0},
-					time:500,
-					ease:JakeTween.easing.exponential.out
-				}).start();
 				break;
 
 			default:
@@ -285,7 +292,7 @@ class MgVisualizer{
 	}
 
 	loadSongViaAjax(url){
-		if(this.loadingSong){
+		if(this.loadingSong || typeof url !== 'string' || url.trim().length === 0){
 			return;
 		}
 		this.loadingSong = true;
@@ -356,7 +363,7 @@ class MgVisualizer{
 		this.renderVisualizer = true;
 		this.stopped = false;
 
-		this.canvas.style.opacity = 1;
+		this.canvasOpacity = 1;
 
 		this.musicSource.onended = function(){
 			if(this.loadingSong || this.stopped){
@@ -409,12 +416,16 @@ class MgVisualizer{
 			this.stopTimeout.destroy();
 		}
 		this.stopTimeout = new JakeTween({
-			on:this.canvas.style,
-			to:{opacity:0},
-			scope:this,
+			on:this,
+			to:{canvasOpacity:0},
 			onComplete:function(){
+				new JakeTween({
+					on:this,
+					to:{logoSubtractScale:1,logoRotation:0},
+					time:500,
+					ease:JakeTween.easing.exponential.out
+				}).start();
 				this.canvasCtx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-				//this.canvas.style.opacity = 0;
 				this.renderVisualizer = false;
 			}
 		}).start();
@@ -438,6 +449,8 @@ class MgVisualizer{
 		if(!this.renderVisualizer){
 			return;
 		}
+
+		this.canvas.style.opacity = this.canvasOpacity;
 
 		//if(this.paused || !this.musicPlaying){
 		//	return;
