@@ -58,7 +58,7 @@ class Ticker{
 			on:this,
 			to:{primaryTextYPosition:newY},
 			time:500,
-			ease:JakeTween.easing.quadratic.out,
+			ease:JakeTween.easing.exponential.out,
 		}).start();
 	}
 
@@ -69,8 +69,8 @@ class Ticker{
 		this.showTween = new JakeTween({
 			on:this,
 			to:{scale:1},
-			time:2000,
-			ease:JakeTween.easing.back.out
+			time:500,
+			ease:JakeTween.easing.exponential.out
 		}).start();
 	}
 
@@ -81,8 +81,8 @@ class Ticker{
 		this.hideTween = new JakeTween({
 			on:this,
 			to:{scale:0},
-			time:2000,
-			ease:JakeTween.easing.quadratic.out
+			time:500,
+			ease:JakeTween.easing.exponential.out
 		}).start();
 	}
 

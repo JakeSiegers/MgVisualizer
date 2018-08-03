@@ -67,12 +67,18 @@ class MgVisualizer{
 		];
 
 		this.mgBorder = new PathDrawer({
+			drawX:this.canvas.width/2,
+			drawY:this.canvas.height/2,
 			points:points,
-			ctx:this.overlayCtx
+			ctx:this.overlayCtx,
+			lineWidth:20
 		});
 		this.mgBgBorder = new PathDrawer({
+			drawX:this.canvas.width/2,
+			drawY:this.canvas.height/2,
 			points:points,
-			ctx:this.canvasCtx
+			ctx:this.canvasCtx,
+			lineWidth:20
 		});
 
 		this.alreadyDrawing = false;
@@ -125,6 +131,8 @@ class MgVisualizer{
 
 		document.onkeypress = this.keypress.bind(this);
 
+		this.logoSubtractScale = 0;
+
 		this.logoRotation = Math.PI;
 		this.logoRotationTween = new JakeTween({
 			on:this,
@@ -134,7 +142,7 @@ class MgVisualizer{
 			neverDestroy:true
 		});
 
-		this.beatValSmoothed = 0;
+		this.logoBeatValSmoothed = this.beatValSmoothed = 0;
 		this.beatValTween = new JakeTween({
 			on:this,
 			to:{beatValSmoothed:0},
@@ -145,6 +153,12 @@ class MgVisualizer{
 
 		this.notification = new StreamNotification(this.overlayCanvas);
 		this.streamTimer = new StreamTimer(this.overlayCanvas);
+		this.miniTicker = new MiniTicker(this.overlayCanvas);
+
+		this.miniTicker.notification = this.notification;
+		this.notification.miniTicker = this.miniTicker;
+
+		this.currentScene = 'music';
 
 		this.draw();
 	}
@@ -155,11 +169,13 @@ class MgVisualizer{
 				this.loadSongViaAjax(message.value);
 				break;
 			case 'play':
+				if(this.currentScene !== 'music'){
+					return;
+				}
 				//fade in music, start visuals
 				Ajax.request({
 					url:'/api/getMusicQueue',
 					success:function(reply){
-						console.log(reply);
 						this.musicQueue = reply.musicQueue;
 						this.currentSong = 0;
 						this.loadSongViaAjax(this.musicQueue[0]);
@@ -175,7 +191,6 @@ class MgVisualizer{
 				break;
 			case 'setMusicQueue':
 				this.musicQueue = message.queue;
-				console.log(this.musicQueue);
 				break;
 			case 'setTimer':
 				this.streamTimer.setTime(message.time);
@@ -183,14 +198,35 @@ class MgVisualizer{
 			case 'stopTimer':
 				this.streamTimer.stopTimer();
 				break;
+			case 'updateText':
+				this.ticker.setText(message.text);
+				this.miniTicker.setText(message.text);
+				break;
+			case 'switchToMusic':
+				this.currentScene = 'music';
+				this.miniTicker.hide();
+				this.logoRotation = 0;
+				new JakeTween({
+					on:this,
+					to:{logoSubtractScale:0,logoRotation:Math.PI},
+					time:500,
+					ease:JakeTween.easing.back.out
+				}).start();
+				break;
 			case 'switchToGame':
+				this.currentScene = 'ssf2';
 				this.streamTimer.stopTimer();
 				this.ticker.hide();
 				this.stopMusicAndVisualizer();
+				this.miniTicker.show();
+				new JakeTween({
+					on:this,
+					to:{logoSubtractScale:1,logoRotation:0},
+					time:500,
+					ease:JakeTween.easing.exponential.out
+				}).start();
 				break;
-			case 'updateText':
-				this.ticker.setText(message.text);
-				break;
+
 			default:
 				console.error('Unknown action "'+message.action+'"');
 				break;
@@ -249,6 +285,10 @@ class MgVisualizer{
 	}
 
 	loadSongViaAjax(url){
+		if(this.loadingSong){
+			return;
+		}
+		this.loadingSong = true;
 		this.stop();
 		let dot = url.lastIndexOf('.');
 		if(dot !== -1){
@@ -263,6 +303,7 @@ class MgVisualizer{
 				if(xhr.status === 200){
 					this.audioCtx.decodeAudioData(xhr.response, function(newBuffer){
 						this.currentBuffer = newBuffer;
+						this.loadingSong = false;
 						this.play();
 						this.ticker.show();
 					}.bind(this));
@@ -384,9 +425,11 @@ class MgVisualizer{
 		this.overlayCtx.clearRect(0, 0, this.overlayCanvas.width, this.overlayCanvas.height);
 		JakeTween.update();
 		this.ticker.draw();
+		this.miniTicker.draw();
 		this.notification.draw();
 		this.streamTimer.draw();
 		this.drawVisuals();
+		this.drawLogo();
 		requestAnimationFrame(this.draw.bind(this));
 		this.stats.end();
 	}
@@ -422,7 +465,7 @@ class MgVisualizer{
 		}
 
 		//Tone this down a bit for the logo bouncing.
-		let logoBeatValSmoothed = this.beatValSmoothed/3;
+		this.logoBeatValSmoothed = this.beatValSmoothed/3;
 		this.beatValTween.setConfig({to:{beatValSmoothed:beatVal}}).start();
 
 
@@ -434,15 +477,9 @@ class MgVisualizer{
 
 		this.canvasCtx.fillStyle = '#ffffff';
 
-		let logoX = this.canvas.width/2;//Math.sin(rot)*200+canvas.height/2;
-		let logoY = this.canvas.height/2;//Math.sin(rot)*200+canvas.height/2;
-
-
 		//this.drawCircle(rgb,this.dataArray);
 		this.mgBgBorder.setConfigs({
-			drawX: logoX,
-			drawY: logoY,
-			scale: logoBeatValSmoothed + 1,
+			scale: this.logoBeatValSmoothed + 1,
 			color: rgb,
 			angle: this.logoRotation,
 			fill: false
@@ -460,21 +497,25 @@ class MgVisualizer{
 			this.canvasCtx.drawImage(this.canvasCtx.canvas, 0, 0, this.canvas.width, this.canvas.height, -fadeSpeed, -fadeSpeed, this.canvas.width + fadeSpeed*2, this.canvas.height + fadeSpeed*2);
 		}
 
+	}
+
+	drawLogo(){
+		if(this.logoSubtractScale === 1){
+			return;
+		}
 		this.mgBorder.setConfigs({
-			drawX:logoX,
-			drawY:logoY,
-			scale:logoBeatValSmoothed+1,
+			scale:this.logoBeatValSmoothed+1-this.logoSubtractScale,
 			color:'rgb(0,0,0)',
 			angle:this.logoRotation,
+			lineWidth:20-(20*this.logoSubtractScale),
 			fill:true
 		}).draw();
 		this.mgBorder.setConfigs({
 			color:'rgb(255,255,255)',
 			fill:false
 		}).draw();
-
-		let logoWidth = 150*(logoBeatValSmoothed+1);
-		let logoHeight = 140*(logoBeatValSmoothed+1);
+		let logoWidth = 150*(this.logoBeatValSmoothed+1-this.logoSubtractScale);
+		let logoHeight = 140*(this.logoBeatValSmoothed+1-this.logoSubtractScale);
 		this.overlayCtx.drawImage(this.fist,this.canvas.width/2-logoWidth/2,this.canvas.height/2-logoHeight/2,logoWidth,logoHeight);
 	}
 

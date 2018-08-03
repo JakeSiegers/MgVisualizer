@@ -32,6 +32,7 @@ Ext.define('MG.view.Buttons', {
 					listeners:{
 						click:function(){
 							obsSocket.send({"request-type":"SetCurrentScene","scene-name":'music'});
+							localSocket.send({"action":"switchToMusic","to":'stream'});
 						},
 						scope:this
 					}

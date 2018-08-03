@@ -118,6 +118,14 @@ JakeTween.easing = {
 			let s = 1.70158;
 			return --t*t*((s+1)*t+s)+1;
 		}
+	},
+	exponential: {
+		out: function (t) {
+			if (t === 1) {
+				return 1
+			}
+			return 1 - Math.pow(2, -10 * t);
+		}
 	}
 };
 JakeTween.getNextId = function(){

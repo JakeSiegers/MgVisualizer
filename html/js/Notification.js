@@ -8,6 +8,9 @@ class StreamNotification{
 		this.scale = 0;
 		this.width = 480;
 		this.height = 30;
+		this.miniTickerMode = false;
+
+		this.miniTicker = null;
 
 		this.frame = new PathDrawer({
 			ctx:this.ctx,
@@ -55,6 +58,10 @@ class StreamNotification{
 		let message = this.notificationQueue.shift();
 		this.notificationActive = true;
 		this.currentText = message.text;
+		if(this.miniTickerMode){
+			this.miniTicker.displayNotification(message);
+			return;
+		}
 		this.scale = 0;
 		this.scrollTween.stop();
 		this.scrollPosition = 0;
@@ -62,7 +69,7 @@ class StreamNotification{
 			on:this,
 			to:{scale:1},
 			time:500,
-			ease:JakeTween.easing.quadratic.out,
+			ease:JakeTween.easing.exponential.out,
 			onComplete:function(){
 				this.scrollTween.setConfig({to:{scrollPosition:1},time:message.time/2}).start();
 				setTimeout(this.hideNotification.bind(this),message.time)
@@ -75,7 +82,7 @@ class StreamNotification{
 			on:this,
 			to:{scale:0},
 			time:500,
-			ease:JakeTween.easing.quadratic.out,
+			ease:JakeTween.easing.exponential.out,
 			onComplete:function(){
 				this.notificationActive = false;
 				if(this.notificationQueue.length > 0){
