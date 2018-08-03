@@ -154,7 +154,7 @@ class MgVisualizer{
 
 		this.notification = new StreamNotification(this.overlayCanvas);
 		this.streamTimer = new StreamTimer(this.overlayCanvas);
-		this.miniTicker = new MiniTicker(this.overlayCanvas);
+		this.miniTicker = new MiniTicker(this.overlayCanvas,this.fist);
 
 		this.miniTicker.notification = this.notification;
 		this.notification.miniTicker = this.miniTicker;
@@ -204,6 +204,9 @@ class MgVisualizer{
 				this.miniTicker.setText(message.text);
 				break;
 			case 'switchToMusic':
+				if(this.loadingSong){
+					return;
+				}
 				this.currentScene = 'music';
 				this.miniTicker.hide();
 				this.ticker.show();
@@ -227,6 +230,9 @@ class MgVisualizer{
 				});
 				break;
 			case 'switchToGame':
+				if(this.loadingSong){
+					return;
+				}
 				this.currentScene = 'ssf2';
 				this.streamTimer.stopTimer();
 				this.ticker.hide();
@@ -423,7 +429,7 @@ class MgVisualizer{
 					on:this,
 					to:{logoSubtractScale:1,logoRotation:0},
 					time:500,
-					ease:JakeTween.easing.exponential.out
+					ease:JakeTween.easing.back.in
 				}).start();
 				this.canvasCtx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 				this.renderVisualizer = false;

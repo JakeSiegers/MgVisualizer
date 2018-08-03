@@ -1,5 +1,6 @@
 class MiniTicker{
-	constructor(canvas){
+	constructor(canvas,fist){
+		this.fist = fist;
 		this.canvas = canvas;
 		this.ctx = this.canvas.getContext('2d');
 		this.song = '';
@@ -14,7 +15,7 @@ class MiniTicker{
 		}).start();
 		this.width = 300;
 		this.height = 60;
-		this.offScreenPosition = this.canvas.width/2-900;
+		this.offScreenPosition = this.canvas.width/2-1000;
 		this.onScreenPosition = this.canvas.width/2-490;
 		this.x = this.offScreenPosition;
 		this.y = this.canvas.height/2-300;
@@ -179,16 +180,14 @@ class MiniTicker{
 
 		let notificationTextWithSpacer = this.notificationText+spacer;
 
-		//if(this.notification.length > 0) {
-			this.ctx.font = '400 18px Roboto';
-			if (this.ctx.measureText(this.notificationText).width > this.width) {
-				this.ctx.textAlign = 'left';
-				this.ctx.fillText(notificationTextWithSpacer + notificationTextWithSpacer, this.x - (this.width / 2) - (this.ctx.measureText(notificationTextWithSpacer).width * this.scrollPosition), this.notificationYPosition);
-			} else {
-				this.ctx.textAlign = 'center';
-				this.ctx.fillText(this.notificationText, this.x, this.notificationYPosition);
-			}
-		//}
+		this.ctx.font = '400 18px Roboto';
+		if (this.ctx.measureText(this.notificationText).width > this.width) {
+			this.ctx.textAlign = 'left';
+			this.ctx.fillText(notificationTextWithSpacer + notificationTextWithSpacer, this.x - (this.width / 2) - (this.ctx.measureText(notificationTextWithSpacer).width * this.scrollPosition), this.notificationYPosition);
+		} else {
+			this.ctx.textAlign = 'center';
+			this.ctx.fillText(this.notificationText, this.x, this.notificationYPosition);
+		}
 
 		this.ctx.restore();
 		this.mgBorder.setConfigs({
@@ -200,5 +199,9 @@ class MiniTicker{
 			color:'rgb(255,255,255)',
 			fill:false
 		}).draw();
+
+		let logoWidth = 150*0.4;
+		let logoHeight = 140*0.4;
+		this.ctx.drawImage(this.fist,(this.x+this.width/2+30)-logoWidth/2,this.y-logoHeight/2,logoWidth,logoHeight);
 	}
 }
