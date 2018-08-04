@@ -185,7 +185,7 @@ class MgVisualizer{
 				});
 				break;
 			case 'stop':
-				this.stopMusicAndVisualizer();
+				this.stop();
 				break;
 			case 'notification':
 				this.notification.displayNotification(message);
