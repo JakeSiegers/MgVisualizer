@@ -185,7 +185,7 @@ class MgVisualizer{
 				});
 				break;
 			case 'stop':
-				this.stop();
+				this.stopMusicAndVisualizer();
 				break;
 			case 'notification':
 				this.notification.displayNotification(message);
@@ -238,6 +238,14 @@ class MgVisualizer{
 				this.ticker.hide();
 				this.stopMusicAndVisualizer();
 				this.miniTicker.show();
+				setTimeout(function(){
+					new JakeTween({
+						on:this,
+						to:{logoSubtractScale:1,logoRotation:0},
+						time:500,
+						ease:JakeTween.easing.back.in
+					}).start();
+				}.bind(this),1000);
 				break;
 
 			default:
@@ -424,13 +432,8 @@ class MgVisualizer{
 		this.stopTimeout = new JakeTween({
 			on:this,
 			to:{canvasOpacity:0},
+			time:1000,
 			onComplete:function(){
-				new JakeTween({
-					on:this,
-					to:{logoSubtractScale:1,logoRotation:0},
-					time:500,
-					ease:JakeTween.easing.back.in
-				}).start();
 				this.canvasCtx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 				this.renderVisualizer = false;
 			}
