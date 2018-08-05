@@ -24,7 +24,7 @@ Ext.define('MG.view.TextChangers', {
 					},
 					layout: {
 						type: 'hbox',
-						align: 'stretch'
+						align: 'bottom'
 					},
 					items: [
 						{
@@ -36,6 +36,7 @@ Ext.define('MG.view.TextChangers', {
 							store: 'TimeStore',
 							valueField: 'seconds',
 							itemId: 'timePicker',
+							labelAlign:'top',
 							listeners: {
 								afterrender: 'onComboboxAfterRender'
 							}
@@ -64,15 +65,29 @@ Ext.define('MG.view.TextChangers', {
 					},
 					layout: {
 						type: 'hbox',
-						align: 'stretch'
+						align: 'bottom'
 					},
 					items: [
 						{
 							xtype: 'textfield',
 							fieldLabel: 'Primary Text',
 							emptyText: 'McLeodGaming @ Smash Con 2018',
-							itemId:'primaryText'
-						},
+							itemId:'primaryText',
+							width:400,
+							labelAlign:'top'
+						}
+					]
+				},
+				{
+					xtype: 'container',
+					defaults: {
+						margin: 5
+					},
+					layout: {
+						type: 'hbox',
+						align: 'stretch'
+					},
+					items: [
 						{
 							xtype: 'button',
 							text: 'Update Text',
@@ -155,13 +170,92 @@ Ext.define('MG.view.TextChangers', {
 							}
 						}
 					]
+				},
+				{
+					xtype: 'container',
+					flex: 1,
+					defaults: {
+						margin: '5 5 0 5',
+						height:50,
+						width:200
+					},
+					layout: {
+						type: 'hbox',
+						align: 'stretch'
+					},
+					items: [
+						{
+							xtype: 'button',
+							flex: 1,
+							text: 'MUSIC SCENE',
+							listeners:{
+								click:function(){
+									obsSocket.send({"request-type":"SetCurrentScene","scene-name":'music'});
+									localSocket.send({"action":"switchToMusic","to":'stream'});
+								},
+								scope:this
+							}
+						},
+						{
+							xtype: 'button',
+							flex: 1,
+							text: 'SSF2 SCENE',
+							listeners:{
+								click:function(){
+									obsSocket.send({"request-type":"SetCurrentScene","scene-name":'ssf2'});
+									localSocket.send({"action":"switchToGame","to":'stream'});
+								},
+								scope:this
+							}
+						}
+					]
+				},
+				{
+					xtype: 'container',
+					flex: 1,
+					defaults: {
+						margin: '5 5 0 5',
+						height:50,
+						width:200
+					},
+					layout: {
+						type: 'hbox',
+						align: 'stretch'
+					},
+					items: [
+						{
+							xtype: 'button',
+							flex: 1,
+							text: 'PLAY MUSIC',
+							listeners:{
+								click:function(){
+									localSocket.send({"action":"play","to":"stream"});
+								},
+								scope:this
+							}
+						},
+						{
+							xtype: 'button',
+							flex: 1,
+							text: 'STOP MUSIC',
+							listeners:{
+								click:function(){
+									localSocket.send({"action":"stop","to":"stream"});
+								},
+								scope:this
+							}
+						}
+					]
 				}
 			]
 		},
 		{
 			xtype: 'container',
 			flex: 1,
-			layout: 'fit',
+			layout: {
+				type: 'vbox',
+				align: 'stretch'
+			},
 			items: [
 				/*
 				{
@@ -172,7 +266,9 @@ Ext.define('MG.view.TextChangers', {
 				*/
 				{
 					xtype: 'cartesian',
-					itemId:'streamGraph',
+					flex:1,
+					itemId:'kbpsGraph',
+					animation:false,
 					width:300,
 					//reference: 'number-chart',
 					store: Ext.create('Ext.data.JsonStore', {
@@ -181,16 +277,16 @@ Ext.define('MG.view.TextChangers', {
 					axes: [{
 						type: 'numeric',
 						minimum: 0,
-						maximum: 10000,
+						maximum: 5000,
 						grid: true,
 						position: 'left',
-						title: 'KBPS'
+						title: 'KBPS',
 					}, {
 						type: 'numeric',
 						grid: true,
 						position: 'bottom',
-						title: 'Seconds',
-						fields: ['xValue'],
+						title: 'Time',
+						//fields: ['xValue'],
 						style: {
 							textPadding: 0
 						},
@@ -198,7 +294,7 @@ Ext.define('MG.view.TextChangers', {
 					}],
 					series: [{
 						type: 'line',
-						title: 'Values',
+						//title: 'KBPS',
 						//label: {
 						//	display: 'over',
 						//	field: 'yValue'
@@ -208,15 +304,62 @@ Ext.define('MG.view.TextChangers', {
 						},
 						style: {
 							lineWidth: 4,
-							miterLimit: 0
+							miterLimit: 0,
+							fillStyle:'rgba(0,150,136,0.5)',
+							strokeStyle:'rgb(0,150,136)'
 						},
 						xField: 'xValue',
 						yField: ['yValue']
+					}]
+				},
+				{
+					xtype: 'cartesian',
+					flex:1,
+					itemId:'dropGraph',
+					animation:false,
+					width:300,
+					//reference: 'number-chart',
+					store: Ext.create('Ext.data.JsonStore', {
+						fields: ['yValue', 'xValue']
+					}),
+					axes: [{
+						type: 'numeric',
+						minimum: 0,
+						maximum: 100,
+						grid: true,
+						position: 'left',
+						title: 'Drop %',
+					},{
+						type: 'numeric',
+						grid: true,
+						position: 'bottom',
+						title: 'Time',
+						fields: ['xValue'],
+						style: {
+							textPadding: 0
+						},
+						renderer: 'onAxisLabelRender'
 					}],
-					listeners: {
-						//afterrender: 'onNumberChartRendered',
-						//destroy: 'onNumberChartDestroy'
-					}
+					series: [{
+						type: 'line',
+						//title: 'KBPS',
+						//label: {
+						//	display: 'over',
+						//	field: 'yValue'
+						//},
+						itemId:'dropGraphLine',
+						marker: {
+							radius: 4
+						},
+						style: {
+							lineWidth: 4,
+							miterLimit: 0,
+							fillStyle:'rgba(244,67,54,0.5)',
+							strokeStyle:'rgb(244,67,54)'
+						},
+						xField: 'xValue',
+						yField: ['yValue']
+					}]
 				}
 			]
 		}
@@ -291,7 +434,15 @@ Ext.define('MG.view.TextChangers', {
 		localSocket.send({to: 'stream', action: 'updateText',text:'McLeodGaming @ Smash Con 2018'});
 	},
 	onAxisLabelRender: function (axis, label, layoutContext) { // only render interger values
-		//console.log('test');
-		return Math.abs(layoutContext.renderer(label) % 1) < 1e-5 ? Math.round(label) : '';
+		let seconds = Math.floor(label%60);
+		if(seconds < 10){
+			seconds = '0'+seconds;
+		}
+		let minutes = Math.floor(label/60%60);
+		if(minutes < 10){
+			minutes = '0'+minutes;
+		}
+		let hours = Math.floor(label/60/60/60);
+		return hours+':'+minutes+':'+seconds;
 	},
 });

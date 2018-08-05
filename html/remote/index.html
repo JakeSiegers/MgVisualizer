@@ -21,11 +21,11 @@
 		}
 
 		.statusGreen{
-			background:green;
+			background:#009688;
 		}
 
 		.statusRed{
-			background:red;
+			background:#F44336;
 		}
 	</style>
 	<script>
@@ -47,8 +47,7 @@
 					},
 					items:[
 						{xtype: 'connectionmonitor'},
-						{xtype: 'textchangers',height:300},
-						{xtype: 'buttons',height:200},
+						{xtype: 'textchangers',height:500},
 						{xtype:'musicgrids',flex:1}
 					]
 				}
@@ -59,7 +58,6 @@
 				'TimeStore'
 			],
 			views: [
-				'Buttons',
 				'TextChangers',
 				'MusicGrids',
 				'ConnectionMonitor'

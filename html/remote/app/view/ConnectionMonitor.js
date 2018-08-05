@@ -109,14 +109,17 @@ Ext.define('MG.view.ConnectionMonitor', {
 		var localSocketStatus = this.queryById('localSocketStatus');
 		localSocketStatus.removeCls('statusRed');
 		localSocketStatus.addCls('statusGreen');
-		/*
+
 		setInterval(function(){
-			this.pushToChart({
-				'total-stream-time':1,
-				'kbits-per-sec':5000
-			});
-		}.bind(this),1000);
-		*/
+			if(!this.ttttime){
+				this.ttttime = 0;
+			}
+			this.pushToChart('kbpsGraph',Math.floor(Math.random()*5000),this.ttttime);
+			this.pushToChart('dropGraph',Math.random()*100,this.ttttime);
+			this.ttttime+=2;
+		}.bind(this),2000);
+
+
 	},
 	localClosed:function(){
 		var localSocketStatus = this.queryById('localSocketStatus');
@@ -175,7 +178,8 @@ Ext.define('MG.view.ConnectionMonitor', {
 			var streamingStatus = this.queryById('streamingStatus');
 			var recordingStatus = this.queryById('recordingStatus');
 			//var streamStats = Ext.ComponentQuery.query('#streamStats')[0];
-			var streamGraph = Ext.ComponentQuery.query('#streamGraph')[0]
+			var kbpsGraph = Ext.ComponentQuery.query('#kbpsGraph')[0];
+			var dropGraph = Ext.ComponentQuery.query('#dropGraph')[0];
 			switch(message['update-type']){
 				case 'RecordingStopped':
 					recordingStatus.removeCls('statusGreen');
@@ -193,12 +197,14 @@ Ext.define('MG.view.ConnectionMonitor', {
 				case 'StreamStarted':
 					streamingStatus.removeCls('statusRed');
 					streamingStatus.addCls('statusGreen');
-					streamGraph.removeAll();
+					kbpsGraph.removeAll();
+					dropGraph.removeAll();
 					break;
 				case 'StreamStatus':
 					//streamStats.setSource(message);
-					//console.log(message);
-					this.pushToChart(message);
+					console.log(message['strain']);
+					this.pushToChart('kbpsGraph',message['kbits-per-sec'],message['total-stream-time']);
+					this.pushToChart('dropGraph',Math.floor(message['strain']*100),message['total-stream-time']);
 					break;
 			}
 		}
@@ -254,30 +260,35 @@ Ext.define('MG.view.ConnectionMonitor', {
 			}
 		});
 	},
-	pushToChart:function(message){
-		let chart = Ext.ComponentQuery.query('#streamGraph')[0],
+	pushToChart:function(graph,value,time){
+		let chart = Ext.ComponentQuery.query('#'+graph)[0],
 			store = chart.getStore(),
 			count = store.getCount(),
 			xAxis = chart.getAxes()[1],
 			visibleRange = 20,
 			xValue;
+		if(count > 40){
+			store.removeAt(0);
+		}
 		if (count > 0) {
-			xValue = message['total-stream-time'];
+			xValue = time;//message['total-stream-time'];
 			if (xValue > visibleRange) {
 				xAxis.setMinimum(xValue - visibleRange);
 				xAxis.setMaximum(xValue);
 			}
 			store.add({
 				xValue: xValue,
-				yValue: message['kbits-per-sec']
+				yValue: value,
+				//y2Value: Math.ceil(message['strain']*100)
 			});
 		} else {
 			chart.animationSuspended = true;
 			xAxis.setMinimum(0);
 			xAxis.setMaximum(visibleRange);
 			store.add({
-				xValue: message['total-stream-time'],
-				yValue: message['kbits-per-sec']
+				xValue: time,//message['total-stream-time'],
+				yValue: value,
+				//y2Value: Math.ceil(message['strain']*100)
 			});
 			chart.animationSuspended = false;
 		}
