@@ -177,7 +177,8 @@ Ext.define('MG.view.TextChangers', {
 				{
 					xtype: 'cartesian',
 					itemId:'streamGraph',
-					reference: 'number-chart',
+					width:300,
+					//reference: 'number-chart',
 					store: Ext.create('Ext.data.JsonStore', {
 						fields: ['yValue', 'xValue']
 					}),
@@ -197,7 +198,7 @@ Ext.define('MG.view.TextChangers', {
 						style: {
 							textPadding: 0
 						},
-						//renderer: 'onAxisLabelRender'
+						renderer: 'onAxisLabelRender'
 					}],
 					series: [{
 						type: 'line',
@@ -292,5 +293,9 @@ Ext.define('MG.view.TextChangers', {
 	},
 	resetText:function(){
 		localSocket.send({to: 'stream', action: 'updateText',text:'McLeodGaming @ Smash Con 2018'});
-	}
+	},
+	onAxisLabelRender: function (axis, label, layoutContext) { // only render interger values
+		//console.log('test');
+		return Math.abs(layoutContext.renderer(label) % 1) < 1e-5 ? Math.round(label) : '';
+	},
 });

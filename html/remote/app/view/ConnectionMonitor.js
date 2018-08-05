@@ -109,7 +109,14 @@ Ext.define('MG.view.ConnectionMonitor', {
 		var localSocketStatus = this.queryById('localSocketStatus');
 		localSocketStatus.removeCls('statusRed');
 		localSocketStatus.addCls('statusGreen');
-		//localSocket.send({action:'play',to:'stream',value:'Snails House - Sunday [Ordinary Songs 4].mp3'});
+		/*
+		setInterval(function(){
+			this.pushToChart({
+				'total-stream-time':1,
+				'kbits-per-sec':5000
+			});
+		}.bind(this),1000);
+		*/
 	},
 	localClosed:function(){
 		var localSocketStatus = this.queryById('localSocketStatus');
@@ -189,32 +196,7 @@ Ext.define('MG.view.ConnectionMonitor', {
 				case 'StreamStatus':
 					//streamStats.setSource(message);
 					//console.log(message);
-					let chart = Ext.ComponentQuery.query('#streamGraph')[0],
-						store = chart.getStore(),
-						count = store.getCount(),
-						xAxis = chart.getAxes()[1],
-						visibleRange = 20,
-						xValue;
-					if (count > 0) {
-						xValue = message['kbits-per-sec'];
-						if (xValue > visibleRange) {
-							xAxis.setMinimum(xValue - visibleRange);
-							xAxis.setMaximum(xValue);
-						}
-						store.add({
-							xValue: xValue,
-							yValue: message['fps']
-						});
-					} else {
-						chart.animationSuspended = true;
-						xAxis.setMinimum(0);
-						xAxis.setMaximum(visibleRange);
-						store.add({
-							xValue: message['kbits-per-sec'],
-							yValue: message['fps']
-						});
-						chart.animationSuspended = false;
-					}
+					this.pushToChart(message);
 					break;
 			}
 		}
@@ -269,5 +251,35 @@ Ext.define('MG.view.ConnectionMonitor', {
 				});
 			}
 		});
+	},
+	pushToChart:function(message){
+		console.log(message['total-stream-time'],message['kbits-per-sec']);
+		let chart = Ext.ComponentQuery.query('#streamGraph')[0],
+			store = chart.getStore(),
+			count = store.getCount(),
+			xAxis = chart.getAxes()[1],
+			visibleRange = 20,
+			xValue;
+		console.log(store.getData().items);
+		if (count > 0) {
+			xValue = message['total-stream-time'];
+			if (xValue > visibleRange) {
+				xAxis.setMinimum(xValue - visibleRange);
+				xAxis.setMaximum(xValue);
+			}
+			store.add({
+				xValue: xValue,
+				yValue: message['kbits-per-sec']
+			});
+		} else {
+			chart.animationSuspended = true;
+			xAxis.setMinimum(0);
+			xAxis.setMaximum(visibleRange);
+			store.add({
+				xValue: message['total-stream-time'],
+				yValue: message['kbits-per-sec']
+			});
+			chart.animationSuspended = false;
+		}
 	}
 });
