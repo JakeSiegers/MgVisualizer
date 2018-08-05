@@ -251,117 +251,13 @@ Ext.define('MG.view.TextChangers', {
 		},
 		{
 			xtype: 'container',
+			itemId: 'graphWrap',
 			flex: 1,
 			layout: {
 				type: 'vbox',
 				align: 'stretch'
 			},
-			items: [
-				/*
-				{
-					xtype: 'propertygrid',
-					title: 'Stream Stats',
-					itemId:'streamStats'
-				}
-				*/
-				{
-					xtype: 'cartesian',
-					flex:1,
-					itemId:'kbpsGraph',
-					animation:false,
-					width:300,
-					//reference: 'number-chart',
-					store: Ext.create('Ext.data.JsonStore', {
-						fields: ['yValue', 'xValue']
-					}),
-					axes: [{
-						type: 'numeric',
-						minimum: 0,
-						maximum: 5000,
-						grid: true,
-						position: 'left',
-						title: 'KBPS',
-					}, {
-						type: 'numeric',
-						grid: true,
-						position: 'bottom',
-						title: 'Time',
-						//fields: ['xValue'],
-						style: {
-							textPadding: 0
-						},
-						renderer: 'onAxisLabelRender'
-					}],
-					series: [{
-						type: 'line',
-						//title: 'KBPS',
-						//label: {
-						//	display: 'over',
-						//	field: 'yValue'
-						//},
-						marker: {
-							radius: 4
-						},
-						style: {
-							lineWidth: 4,
-							miterLimit: 0,
-							fillStyle:'rgba(0,150,136,0.5)',
-							strokeStyle:'rgb(0,150,136)'
-						},
-						xField: 'xValue',
-						yField: ['yValue']
-					}]
-				},
-				{
-					xtype: 'cartesian',
-					flex:1,
-					itemId:'dropGraph',
-					animation:false,
-					width:300,
-					//reference: 'number-chart',
-					store: Ext.create('Ext.data.JsonStore', {
-						fields: ['yValue', 'xValue']
-					}),
-					axes: [{
-						type: 'numeric',
-						minimum: 0,
-						maximum: 100,
-						grid: true,
-						position: 'left',
-						title: 'Drop %',
-					},{
-						type: 'numeric',
-						grid: true,
-						position: 'bottom',
-						title: 'Time',
-						fields: ['xValue'],
-						style: {
-							textPadding: 0
-						},
-						renderer: 'onAxisLabelRender'
-					}],
-					series: [{
-						type: 'line',
-						//title: 'KBPS',
-						//label: {
-						//	display: 'over',
-						//	field: 'yValue'
-						//},
-						itemId:'dropGraphLine',
-						marker: {
-							radius: 4
-						},
-						style: {
-							lineWidth: 4,
-							miterLimit: 0,
-							fillStyle:'rgba(244,67,54,0.5)',
-							strokeStyle:'rgb(244,67,54)'
-						},
-						xField: 'xValue',
-						yField: ['yValue']
-					}]
-				}
-			]
+			items: []
 		}
 
 	],
@@ -442,7 +338,7 @@ Ext.define('MG.view.TextChangers', {
 		if(minutes < 10){
 			minutes = '0'+minutes;
 		}
-		let hours = Math.floor(label/60/60/60);
+		let hours = Math.floor(label/60/60);
 		return hours+':'+minutes+':'+seconds;
-	},
+	}
 });

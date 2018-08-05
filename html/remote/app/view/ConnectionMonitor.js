@@ -117,7 +117,13 @@ Ext.define('MG.view.ConnectionMonitor', {
 			this.pushToChart('kbpsGraph',Math.floor(Math.random()*5000),this.ttttime);
 			this.pushToChart('dropGraph',Math.random()*100,this.ttttime);
 			this.ttttime+=2;
-		}.bind(this),2000);
+		}.bind(this),100);
+		*/
+		/*
+		let graphWrap = Ext.ComponentQuery.query('#graphWrap')[0];
+		graphWrap.removeAll(true);
+		graphWrap.add(this.generateGraph('kbpsGraph','KBPS','0,150,136',5000));
+		graphWrap.add(this.generateGraph('dropGraph','DROP %','244,67,54',100));
 		*/
 
 	},
@@ -177,9 +183,8 @@ Ext.define('MG.view.ConnectionMonitor', {
 		if(message.hasOwnProperty('update-type')){
 			var streamingStatus = this.queryById('streamingStatus');
 			var recordingStatus = this.queryById('recordingStatus');
-			//var streamStats = Ext.ComponentQuery.query('#streamStats')[0];
-			var kbpsGraph = Ext.ComponentQuery.query('#kbpsGraph')[0];
-			var dropGraph = Ext.ComponentQuery.query('#dropGraph')[0];
+			//var kbpsGraph = Ext.ComponentQuery.query('#kbpsGraph')[0];
+			//var dropGraph = Ext.ComponentQuery.query('#dropGraph')[0];
 			switch(message['update-type']){
 				case 'RecordingStopped':
 					recordingStatus.removeCls('statusGreen');
@@ -192,26 +197,16 @@ Ext.define('MG.view.ConnectionMonitor', {
 				case 'StreamStopped':
 					streamingStatus.removeCls('statusGreen');
 					streamingStatus.addCls('statusRed');
-					//streamStats.setSource({});
 					break;
 				case 'StreamStarted':
 					streamingStatus.removeCls('statusRed');
 					streamingStatus.addCls('statusGreen');
-
-					kbpsGraph.getSurface().removeAll();
-					//kbpsAxis = kbpsGraph.getAxes()[1];
-					//kbpsAxis.setMinimum(0);
-					//kbpsAxis.setMaximum(20);
-
-					dropGraph.getSurface().removeAll();
-					//dropAxis = dropGraph.getAxes()[1];
-					//dropAxis.setMinimum(0);
-					//dropAxis.setMaximum(20);
-
+					let graphWrap = Ext.ComponentQuery.query('#graphWrap')[0];
+					graphWrap.removeAll(true);
+					graphWrap.add(this.generateGraph('kbpsGraph','KBPS','0,150,136'));
+					graphWrap.add(this.generateGraph('dropGraph','DROP %','244,67,54'));
 					break;
 				case 'StreamStatus':
-					//streamStats.setSource(message);
-					console.log(message['strain']);
 					this.pushToChart('kbpsGraph',message['kbits-per-sec'],message['total-stream-time']);
 					this.pushToChart('dropGraph',Math.floor(message['strain']*100),message['total-stream-time']);
 					break;
@@ -274,9 +269,9 @@ Ext.define('MG.view.ConnectionMonitor', {
 			store = chart.getStore(),
 			count = store.getCount(),
 			xAxis = chart.getAxes()[1],
-			visibleRange = 20,
+			visibleRange = 120,
 			xValue;
-		if(count > 40){
+		if(count > visibleRange){
 			store.removeAt(0);
 		}
 		if (count > 0) {
@@ -301,5 +296,56 @@ Ext.define('MG.view.ConnectionMonitor', {
 			});
 			chart.animationSuspended = false;
 		}
+	},
+	generateGraph:function(itemId,title,color,max){
+		return Ext.create('Ext.chart.CartesianChart',{
+			xtype: 'cartesian',
+			flex:1,
+			itemId:itemId,
+			animation:false,
+			width:300,
+			insetPadding: '10 25 0 0 ',
+			//reference: 'number-chart',
+			store: Ext.create('Ext.data.JsonStore', {
+				fields: ['yValue', 'xValue']
+			}),
+			axes: [{
+				type: 'numeric',
+				minimum: 0,
+				maximum: max,
+				grid: true,
+				position: 'left',
+				title: title,
+			}, {
+				type: 'numeric',
+				grid: true,
+				position: 'bottom',
+				title: 'Time',
+				//fields: ['xValue'],
+				style: {
+					textPadding: 0
+				},
+				renderer: 'onAxisLabelRender'
+			}],
+			series: [{
+				type: 'line',
+				//title: 'KBPS',
+				//label: {
+				//	display: 'over',
+				//	field: 'yValue'
+				//},
+				marker: {
+					radius: 3
+				},
+				style: {
+					lineWidth: 3,
+					miterLimit: 0,
+					fillStyle:'rgba('+color+',0.5)',
+					strokeStyle:'rgb('+color+')'
+				},
+				xField: 'xValue',
+				yField: ['yValue']
+			}]
+		});
 	}
 });
