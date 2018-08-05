@@ -167,7 +167,7 @@ Ext.define('MG.view.ConnectionMonitor', {
 		if(message.hasOwnProperty('update-type')){
 			var streamingStatus = this.queryById('streamingStatus');
 			var recordingStatus = this.queryById('recordingStatus');
-			var streamStats = Ext.ComponentQuery.query('#streamStats')[0];
+			//var streamStats = Ext.ComponentQuery.query('#streamStats')[0];
 			switch(message['update-type']){
 				case 'RecordingStopped':
 					recordingStatus.removeCls('statusGreen');
@@ -180,14 +180,41 @@ Ext.define('MG.view.ConnectionMonitor', {
 				case 'StreamStopped':
 					streamingStatus.removeCls('statusGreen');
 					streamingStatus.addCls('statusRed');
-					streamStats.setSource({});
+					//streamStats.setSource({});
 					break;
 				case 'StreamStarted':
 					streamingStatus.removeCls('statusRed');
 					streamingStatus.addCls('statusGreen');
 					break;
 				case 'StreamStatus':
-					streamStats.setSource(message);
+					//streamStats.setSource(message);
+					//console.log(message);
+					let chart = Ext.ComponentQuery.query('#streamGraph')[0],
+						store = chart.getStore(),
+						count = store.getCount(),
+						xAxis = chart.getAxes()[1],
+						visibleRange = 20,
+						xValue;
+					if (count > 0) {
+						xValue = message['kbits-per-sec'];
+						if (xValue > visibleRange) {
+							xAxis.setMinimum(xValue - visibleRange);
+							xAxis.setMaximum(xValue);
+						}
+						store.add({
+							xValue: xValue,
+							yValue: message['fps']
+						});
+					} else {
+						chart.animationSuspended = true;
+						xAxis.setMinimum(0);
+						xAxis.setMaximum(visibleRange);
+						store.add({
+							xValue: message['kbits-per-sec'],
+							yValue: message['fps']
+						});
+						chart.animationSuspended = false;
+					}
 					break;
 			}
 		}

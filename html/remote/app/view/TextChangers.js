@@ -6,7 +6,11 @@ Ext.define('MG.view.TextChangers', {
 		'Ext.form.field.ComboBox',
 		'Ext.button.Button',
 		'Ext.form.field.Display',
-		'Ext.grid.property.Grid'
+		'Ext.grid.property.Grid',
+		//'Ext.chart.CartesianChart',
+		//'Ext.chart.axis.Category',
+		//'Ext.chart.axis.Numeric',
+		//'Ext.chart.series.Line'
 	],
 	defaultListenerScope: true,
 	layout: {
@@ -125,58 +129,22 @@ Ext.define('MG.view.TextChangers', {
 					items: [
 						{
 							xtype: 'textfield',
-							fieldLabel: 'Player 1',
-							emptyText: '[ Empty ]'
-						},
-						{
-							xtype: 'textfield',
-							fieldLabel: 'Player 2',
-							emptyText: '[ Empty ]'
-						}
-					]
-				},
-				{
-					xtype: 'container',
-					defaults: {
-						margin: 5
-					},
-					layout: {
-						type: 'hbox',
-						align: 'stretch'
-					},
-					items: [
-						{
-							xtype: 'textfield',
-							fieldLabel: 'Player 3',
-							emptyText: '[ Empty ]'
-						},
-						{
-							xtype: 'textfield',
-							fieldLabel: 'Player 4',
-							emptyText: '[ Empty ]'
-						},
-						{
-							xtype: 'button',
-							text: 'Send'
-						}
-					]
-				},
-				{
-					xtype: 'container',
-					defaults: {
-						margin: 5
-					},
-					layout: {
-						type: 'hbox',
-						align: 'stretch'
-					},
-					items: [
-						{
-							xtype: 'textfield',
 							fieldLabel: 'Twitch Remote URL',
 							labelWidth:150,
 							itemId:'twitchRemoteUrl'
-						},
+						}
+					]
+				},
+				{
+					xtype: 'container',
+					defaults: {
+						margin: 5
+					},
+					layout: {
+						type: 'hbox',
+						align: 'stretch'
+					},
+					items: [
 						{
 							xtype: 'textfield',
 							fieldLabel: 'Client Id',
@@ -199,10 +167,59 @@ Ext.define('MG.view.TextChangers', {
 			flex: 1,
 			layout: 'fit',
 			items: [
+				/*
 				{
 					xtype: 'propertygrid',
 					title: 'Stream Stats',
 					itemId:'streamStats'
+				}
+				*/
+				{
+					xtype: 'cartesian',
+					itemId:'streamGraph',
+					reference: 'number-chart',
+					store: Ext.create('Ext.data.JsonStore', {
+						fields: ['yValue', 'xValue']
+					}),
+					axes: [{
+						type: 'numeric',
+						minimum: 0,
+						maximum: 10000,
+						grid: true,
+						position: 'left',
+						title: 'KBPS'
+					}, {
+						type: 'numeric',
+						grid: true,
+						position: 'bottom',
+						title: 'Seconds',
+						fields: ['xValue'],
+						style: {
+							textPadding: 0
+						},
+						//renderer: 'onAxisLabelRender'
+					}],
+					series: [{
+						type: 'line',
+						title: 'Values',
+						label: {
+							display: 'over',
+							field: 'yValue'
+						},
+						marker: {
+							radius: 4
+						},
+						style: {
+							lineWidth: 4,
+							miterLimit: 0
+						},
+						xField: 'xValue',
+						yField: ['yValue']
+					}],
+					listeners: {
+						//afterrender: 'onNumberChartRendered',
+						//destroy: 'onNumberChartDestroy'
+					}
 				}
 			]
 		}
