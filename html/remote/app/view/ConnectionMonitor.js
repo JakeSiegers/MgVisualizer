@@ -197,8 +197,8 @@ Ext.define('MG.view.ConnectionMonitor', {
 				case 'StreamStarted':
 					streamingStatus.removeCls('statusRed');
 					streamingStatus.addCls('statusGreen');
-					kbpsGraph.removeAll();
-					dropGraph.removeAll();
+					//kbpsGraph.removeAll();
+					//dropGraph.removeAll();
 					break;
 				case 'StreamStatus':
 					//streamStats.setSource(message);
