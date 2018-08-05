@@ -13,6 +13,9 @@ Ext.define('MG.view.TextChangers', {
 		type: 'hbox',
 		align: 'stretch'
 	},
+	listeners:{
+		afterrender:'checkLocalStorage'
+	},
 	items: [
 		{
 			xtype: 'container',
@@ -165,7 +168,6 @@ Ext.define('MG.view.TextChangers', {
 							xtype: 'button',
 							text: 'Connect',
 							listeners:{
-								afterrender:'checkTwitchLocalStorage',
 								click:'connectToTwitch'
 							}
 						}
@@ -261,12 +263,13 @@ Ext.define('MG.view.TextChangers', {
 		}
 
 	],
-	checkTwitchLocalStorage:function(){
-		console.log('check twitch localstorage');
+	checkLocalStorage:function(){
 		var twitchRemoteUrl = window.localStorage.getItem('twitchRemoteUrl');
 		var twitchClientId = window.localStorage.getItem('twitchClientId');
+		var primaryText = window.localStorage.getItem('primaryText');
 		this.queryById('twitchRemoteUrl').setValue(twitchRemoteUrl);
 		this.queryById('twitchClientId').setValue(twitchClientId);
+		this.queryById('primaryText').setValue(primaryText);
 
 	},
 	connectToTwitch:function(){
@@ -324,6 +327,7 @@ Ext.define('MG.view.TextChangers', {
 		if(primaryText.trim() === ''){
 			primaryText = 'McLeodGaming @ Smash Con 2018';
 		}
+		window.localStorage.setItem('primaryText',primaryText);
 		localSocket.send({to: 'stream', action: 'updateText',text:primaryText});
 	},
 	resetText:function(){
