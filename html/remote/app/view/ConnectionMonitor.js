@@ -109,7 +109,7 @@ Ext.define('MG.view.ConnectionMonitor', {
 		var localSocketStatus = this.queryById('localSocketStatus');
 		localSocketStatus.removeCls('statusRed');
 		localSocketStatus.addCls('statusGreen');
-
+		/*
 		setInterval(function(){
 			if(!this.ttttime){
 				this.ttttime = 0;
@@ -118,7 +118,7 @@ Ext.define('MG.view.ConnectionMonitor', {
 			this.pushToChart('dropGraph',Math.random()*100,this.ttttime);
 			this.ttttime+=2;
 		}.bind(this),2000);
-
+		*/
 
 	},
 	localClosed:function(){
