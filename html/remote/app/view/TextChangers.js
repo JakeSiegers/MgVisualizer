@@ -269,6 +269,7 @@ Ext.define('MG.view.TextChangers', {
 		var primaryText = window.localStorage.getItem('primaryText');
 		this.queryById('twitchRemoteUrl').setValue(twitchRemoteUrl);
 		this.queryById('twitchClientId').setValue(twitchClientId);
+		this.connectToTwitch();
 		this.queryById('primaryText').setValue(primaryText);
 
 	},
