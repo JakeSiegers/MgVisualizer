@@ -175,6 +175,7 @@ Ext.define('MG.view.ConnectionMonitor', {
 			var streamingStatus = this.queryById('streamingStatus');
 			var recordingStatus = this.queryById('recordingStatus');
 			//var streamStats = Ext.ComponentQuery.query('#streamStats')[0];
+			var streamGraph = Ext.ComponentQuery.query('#streamGraph')[0]
 			switch(message['update-type']){
 				case 'RecordingStopped':
 					recordingStatus.removeCls('statusGreen');
@@ -192,6 +193,7 @@ Ext.define('MG.view.ConnectionMonitor', {
 				case 'StreamStarted':
 					streamingStatus.removeCls('statusRed');
 					streamingStatus.addCls('statusGreen');
+					streamGraph.removeAll();
 					break;
 				case 'StreamStatus':
 					//streamStats.setSource(message);
@@ -253,14 +255,12 @@ Ext.define('MG.view.ConnectionMonitor', {
 		});
 	},
 	pushToChart:function(message){
-		console.log(message['total-stream-time'],message['kbits-per-sec']);
 		let chart = Ext.ComponentQuery.query('#streamGraph')[0],
 			store = chart.getStore(),
 			count = store.getCount(),
 			xAxis = chart.getAxes()[1],
 			visibleRange = 20,
 			xValue;
-		console.log(store.getData().items);
 		if (count > 0) {
 			xValue = message['total-stream-time'];
 			if (xValue > visibleRange) {

@@ -6,11 +6,7 @@ Ext.define('MG.view.TextChangers', {
 		'Ext.form.field.ComboBox',
 		'Ext.button.Button',
 		'Ext.form.field.Display',
-		'Ext.grid.property.Grid',
-		//'Ext.chart.CartesianChart',
-		//'Ext.chart.axis.Category',
-		//'Ext.chart.axis.Numeric',
-		//'Ext.chart.series.Line'
+		'Ext.grid.property.Grid'
 	],
 	defaultListenerScope: true,
 	layout: {
@@ -203,10 +199,10 @@ Ext.define('MG.view.TextChangers', {
 					series: [{
 						type: 'line',
 						title: 'Values',
-						label: {
-							display: 'over',
-							field: 'yValue'
-						},
+						//label: {
+						//	display: 'over',
+						//	field: 'yValue'
+						//},
 						marker: {
 							radius: 4
 						},
