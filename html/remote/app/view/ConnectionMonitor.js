@@ -198,13 +198,16 @@ Ext.define('MG.view.ConnectionMonitor', {
 					streamingStatus.removeCls('statusRed');
 					streamingStatus.addCls('statusGreen');
 
-					kbpsAxis = kbpsGraph.getAxes()[1];
-					kbpsAxis.setMinimum(0);
-					kbpsAxis.setMaximum(20);
+					kbpsGraph.getSurface().removeAll();
+					//kbpsAxis = kbpsGraph.getAxes()[1];
+					//kbpsAxis.setMinimum(0);
+					//kbpsAxis.setMaximum(20);
 
-					dropAxis = dropGraph.getAxes()[1];
-					dropAxis.setMinimum(0);
-					dropAxis.setMaximum(20);
+					dropGraph.getSurface().removeAll();
+					//dropAxis = dropGraph.getAxes()[1];
+					//dropAxis.setMinimum(0);
+					//dropAxis.setMaximum(20);
+
 					break;
 				case 'StreamStatus':
 					//streamStats.setSource(message);
