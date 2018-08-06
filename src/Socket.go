@@ -2,10 +2,13 @@ package main
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"github.com/gorilla/websocket"
+	"io/ioutil"
 	"log"
+	"os/exec"
 	"time"
 )
 
@@ -67,7 +70,9 @@ func (socket *Socket) readIncomingMessages() {
 		decodedMessage := make(map[string]string)
 		json.Unmarshal(message, &decodedMessage)
 		//fmt.Printf("%v",decodedMessage["action"])
-		if val, ok := decodedMessage["to"]; ok {
+		if val, ok := decodedMessage["action"]; ok && val == "getFrame" {
+			go getVideoFrame(decodedMessage["timestamp"])
+		} else if val, ok := decodedMessage["to"]; ok {
 			log.Println(val)
 			socketWatcher.message <- &SocketMessage{to: decodedMessage["to"], text: string(message), from: socket}
 		} else {
@@ -123,4 +128,31 @@ func (socket *Socket) sendOutgoingMessages() {
 			}
 		}
 	}
+}
+
+func getVideoFrame(timestamp string) {
+	log.Println(timestamp)
+	files, _ := ioutil.ReadDir("C:\\Users\\jsiegers\\Videos\\2018\\")
+	if len(files) == 0 {
+		return
+	}
+	lastFile := files[len(files)-1].Name()
+	log.Println(lastFile)
+	filename := "C:\\Users\\jsiegers\\Videos\\2018\\" + lastFile
+	//log.Println(filename)
+	width := 355
+	height := 200
+	//log.Println("cmd")
+	cmd := exec.Command("C:\\Users\\jsiegers\\Desktop\\ffmpeg-4.0.2-win64-static\\bin\\ffmpeg.exe", "-ss", timestamp, "-i", filename, "-vframes", "1", "-s", fmt.Sprintf("%dx%d", width, height), "-f", "singlejpeg", "-")
+	var buffer bytes.Buffer
+	cmd.Stdout = &buffer
+	//log.Println("run")
+	if cmd.Run() != nil {
+		log.Println("Failed to get video frame " + filename)
+		return
+	}
+	//log.Println("b64");
+	base64Str := base64.StdEncoding.EncodeToString(buffer.Bytes())
+	text, _ := json.Marshal(map[string]interface{}{"action": "frame", "image": base64Str})
+	socketWatcher.message <- &SocketMessage{to: "remote", text: string(text)}
 }

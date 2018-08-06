@@ -259,8 +259,25 @@ Ext.define('MG.view.TextChangers', {
 				type: 'vbox',
 				align: 'stretch'
 			},
-			items: []
-		}
+			items: [
+				{
+					xtype: 'container',
+					itemId: 'graphWrap',
+					flex: 1,
+					layout: {
+						type: 'vbox',
+						align: 'stretch'
+					},
+					items: []
+				},
+				{
+					xtype: 'container',
+					itemId: 'imageWrap',
+					height:210
+				}
+			]
+		},
+
 
 	],
 	checkLocalStorage:function(){

@@ -90,6 +90,7 @@ Ext.define('MG.view.ConnectionMonitor', {
 				url:document.location.host+'/webSocket?user=remote',
 				onConnect:this.localConnected,
 				onClose:this.localClosed,
+				onMessage:this.localMessage,
 				scope:this
 			});
 			localSocket.connect();
@@ -131,6 +132,11 @@ Ext.define('MG.view.ConnectionMonitor', {
 		var localSocketStatus = this.queryById('localSocketStatus');
 		localSocketStatus.removeCls('statusGreen');
 		localSocketStatus.addCls('statusRed');
+	},
+	localMessage:function(message){
+		if(message.action === 'frame'){
+			Ext.ComponentQuery.query("#imageWrap")[0].setHtml('<img src="data:image/jpeg;base64,' + message.image + '"/>');
+		}
 	},
 	obsConnected:function(){
 		var obsSocketStatus = this.queryById('obsSocketStatus');
@@ -209,6 +215,20 @@ Ext.define('MG.view.ConnectionMonitor', {
 				case 'StreamStatus':
 					this.pushToChart('kbpsGraph',message['kbits-per-sec'],message['total-stream-time']);
 					this.pushToChart('dropGraph',Math.floor(message['strain']*100),message['total-stream-time']);
+					if(message['rec-timecode']){
+						//let seconds = 0;
+						let hours=message['rec-timecode'].substring(0,2);
+						let minutes=message['rec-timecode'].substring(3,5);
+						let seconds=parseInt(message['rec-timecode'].substring(6,8));
+						if(seconds>3){
+							seconds -= 3;
+						}
+						if(seconds < 10){
+							seconds = '0'+seconds;
+						}
+						//console.log(seconds);
+						localSocket.send({'action':'getFrame','timestamp':hours+":"+minutes+":"+seconds})
+					}
 					break;
 			}
 		}
