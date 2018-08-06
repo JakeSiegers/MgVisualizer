@@ -14,11 +14,11 @@ class MiniTicker{
 			neverDestroy:true
 		}).start();
 		this.width = 300;
-		this.height = 60;
+		this.height = 50;
 		this.offScreenPosition = this.canvas.width/2-1000;
 		this.onScreenPosition = this.canvas.width/2-490;
 		this.x = this.offScreenPosition;
-		this.y = this.canvas.height/2-300;
+		this.y = this.canvas.height/2-315;
 		this.frame = new PathDrawer({
 			ctx:this.ctx,
 			points:this.generatePath(),
@@ -35,6 +35,7 @@ class MiniTicker{
 		this.notificationText = '';
 		this.notification = null;
 
+		this.scale = 0.3;
 		this.mgBorder = new PathDrawer({
 			drawX:this.x+this.width/2,
 			drawY:this.y,
@@ -60,7 +61,7 @@ class MiniTicker{
 				{x:688,y:290.8}
 			],
 			ctx:this.ctx,
-			scale:0.4,
+			scale:this.scale,
 			lineWidth:6,
 			angle:Math.PI
 		});
@@ -170,7 +171,7 @@ class MiniTicker{
 		this.ctx.textBaseline= 'middle';
 
 		this.ctx.font = '900 25px Roboto';
-		if(this.ctx.measureText(text).width > this.width){
+		if(this.ctx.measureText(text).width > this.width-20){
 			this.ctx.textAlign = 'left';
 			this.ctx.fillText(textWithSpacer+textWithSpacer,this.x-(this.width/2)-(this.ctx.measureText(textWithSpacer).width*this.scrollPosition),this.primaryTextYPosition);
 		}else {
@@ -181,7 +182,7 @@ class MiniTicker{
 		let notificationTextWithSpacer = this.notificationText+spacer;
 
 		this.ctx.font = '400 18px Roboto';
-		if (this.ctx.measureText(this.notificationText).width > this.width) {
+		if (this.ctx.measureText(this.notificationText).width > this.width-20) {
 			this.ctx.textAlign = 'left';
 			this.ctx.fillText(notificationTextWithSpacer + notificationTextWithSpacer, this.x - (this.width / 2) - (this.ctx.measureText(notificationTextWithSpacer).width * this.scrollPosition), this.notificationYPosition);
 		} else {
@@ -200,8 +201,8 @@ class MiniTicker{
 			fill:false
 		}).draw();
 
-		let logoWidth = 150*0.4;
-		let logoHeight = 140*0.4;
+		let logoWidth = 150*this.scale;
+		let logoHeight = 140*this.scale;
 		this.ctx.drawImage(this.fist,(this.x+this.width/2+30)-logoWidth/2,this.y-logoHeight/2,logoWidth,logoHeight);
 	}
 }
