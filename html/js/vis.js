@@ -237,8 +237,8 @@ class MgVisualizer{
 				this.streamTimer.stopTimer();
 				this.ticker.hide();
 				this.stopMusicAndVisualizer();
-				this.miniTicker.show();
 				setTimeout(function(){
+					this.miniTicker.show();
 					new JakeTween({
 						on:this,
 						to:{logoSubtractScale:1,logoRotation:0},
