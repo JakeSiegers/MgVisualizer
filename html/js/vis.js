@@ -161,6 +161,8 @@ class MgVisualizer{
 
 		this.currentScene = 'music';
 
+		this.currentSensitivity = 64;
+
 		this.draw();
 	}
 
@@ -288,12 +290,7 @@ class MgVisualizer{
 	loadSongFromBrowse(file){
 		this.stop();
 		this.loadingSong = true;
-		let dot = file.name.lastIndexOf('.');
-		if(dot !== -1){
-			this.ticker.setSong(file.name.substring(0,dot));
-		}else{
-			this.ticker.setSong(file.name);
-		}
+		this.parseFileName(url);
 		let reader = new FileReader();
 		reader.onload = function() {
 			this.audioCtx.decodeAudioData(reader.result, function(newBuffer){
@@ -311,12 +308,7 @@ class MgVisualizer{
 		}
 		this.loadingSong = true;
 		this.stop();
-		let dot = url.lastIndexOf('.');
-		if(dot !== -1){
-			this.ticker.setSong(url.substring(0,dot));
-		}else{
-			this.ticker.setSong(url);
-		}
+		this.parseFileName(url);
 		let xhr = new XMLHttpRequest();
 		xhr.responseType = 'arraybuffer';
 		xhr.onreadystatechange = function(){
@@ -335,6 +327,23 @@ class MgVisualizer{
 		}.bind(this);
 		xhr.open("GET", "music/"+url, true);
 		xhr.send();
+	}
+
+	parseFileName(file) {
+		let pattern = /\[s(\d+)]/;
+		let matches = file.match(pattern);
+		if(matches != null && matches.length >= 2){
+			file = file.replace(pattern,"");
+			this.currentSensitivity = matches[1];
+		}else{
+			this.currentSensitivity = 64;
+		}
+		let dot = file.lastIndexOf('.');
+		if(dot !== -1){
+			this.ticker.setSong(file.substring(0,dot));
+		}else{
+			this.ticker.setSong(file);
+		}
 	}
 
 	play(){
@@ -471,7 +480,7 @@ class MgVisualizer{
 		//this.canvasCtx.fillStyle = 'rgba(0, 0, 0, 0.03)';
 		//this.canvasCtx.fillRect(0,0,canvas.width,canvas.height);
 
-		let beatVal = Math.abs(this.lowPassDataArray[0]-128)/64;
+		let beatVal = Math.abs(this.lowPassDataArray[0]-128)/this.currentSensitivity;//64;
 		if(beatVal >= this.beatPeakCap && !this.recentBeatPeaks.includes(this.beatPeakCap)){
 			this.logoRotateDirection *= -1;
 			this.logoRotationTween.setConfig({to:{logoRotation:Math.PI*this.logoRotateDirection}}).start();
