@@ -80,8 +80,8 @@ class PathDrawer{
 				this.configs.section = 1;
 			}
 			let max = this.fromCenter.length-1;
-			start = 0;
-			end = Math.floor(max*this.configs.section);
+			start = Math.floor(max*this.configs.section);
+			end = start+3;
 			if(end > max){
 				end = max;
 			}

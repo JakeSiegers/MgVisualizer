@@ -156,9 +156,17 @@ class MgVisualizer{
 			loop:true
 		}).start();
 
+		this.glowEdgePercent = 0;
+		new JakeTween({
+			on:this,
+			to:{glowEdgePercent:1},
+			time:1000,
+			loop:true
+		}).start();
+
 		this.logoScale = 1;
-//
-		this.logoBeatValSmoothed = this.beatValSmoothed = 0;
+
+		this.beatValSmoothed = 0;
 		this.beatValTween = new JakeTween({
 			on:this,
 			to:{beatValSmoothed:0},
@@ -169,7 +177,6 @@ class MgVisualizer{
 
 		this.logoX = this.canvas.width/2;
 		this.logoY = this.canvas.height/2;
-		this.logoAngle = Math.random()*Math.PI*2;
 
 		this.notification = new StreamNotification(this.overlayCanvas);
 		this.streamTimer = new StreamTimer(this.overlayCanvas);
@@ -490,8 +497,6 @@ class MgVisualizer{
 				this.recentBeatPeaks.shift();
 			}
 
-			//Tone this down a bit for the logo bouncing.
-			//this.logoBeatValSmoothed = this.beatValSmoothed/3;
 			this.beatValTween.setConfig({to:{beatValSmoothed:beatVal}}).start();
 		}
 
@@ -523,20 +528,21 @@ class MgVisualizer{
 					stroke: true,
 					drawX:drawX,
 					drawY:drawY,
-					lineWidth:lineWidth
+					lineWidth:lineWidth,
+					//section:this.glowEdgePercent
 				}).draw();
 
 				//this.overlayCtx.save();
 				this.mgBorder.setConfigs({
 					scale: scale,
 					color: 'rgb(0,0,0)',
-					strokeColor: 'rgb(20,20,20)',
+					strokeColor: 'rgba(40,40,40,0.5)',
 					angle: angle,
 					fill: true,
 					stroke: true,
 					drawX:drawX,
 					drawY:drawY,
-					lineWidth:lineWidth
+					lineWidth:lineWidth,
 				}).draw();
 				//this.overlayCtx.clip();
 
