@@ -3,18 +3,32 @@ class Ticker{
 		this.canvas = canvas;
 		this.ctx = this.canvas.getContext('2d');
 		this.song = '';
+		this.displaySong = '';
 		this.scrollPosition = 0;
+		this.musicScrollPosition = 0;
+
+		this.tickerTweenYPos = 0;
+		this.musicTickerTweenYPos = 300;
+
 		this.scrollTween = new JakeTween({
 			on:this,
 			to:{scrollPosition:1},
-			time:10000,
+			time:5000,
+			ease:JakeTween.easing.linear,
+			loop:true,
+			neverDestroy:true
+		}).start();
+		this.musicScrollTween = new JakeTween({
+			on:this,
+			to:{musicScrollPosition:1},
+			time:5000,
 			ease:JakeTween.easing.linear,
 			loop:true,
 			neverDestroy:true
 		}).start();
 		this.scale = 1;
-		this.width = 550;
-		this.height = 60;
+		this.width = 1000;
+		this.height = 200;
 		this.frame = new PathDrawer({
 			ctx:this.ctx,
 			points:this.generatePath(),
@@ -47,18 +61,25 @@ class Ticker{
 
 	setSong(song){
 		this.song = song;
-		if(this.primaryTextYTween){
-			this.primaryTextYTween.destroy();
+		if(this.musicTextTween){
+			this.musicTextTween.destroy();
 		}
-		let newY = this.canvas.height/2+225;
-		if(this.song.length > 0){
-			newY = this.canvas.height/2+215
+		let newMusicPos = 300;
+		if(song.length > 0){
+			newMusicPos = 0;
+			this.displaySong = this.song;
+
 		}
-		this.primaryTextYTween = new JakeTween({
+		this.musicTextTween = new JakeTween({
 			on:this,
-			to:{primaryTextYPosition:newY},
-			time:500,
+			to:{musicTickerTweenYPos:newMusicPos},
+			time:1000,
 			ease:JakeTween.easing.exponential.out,
+			onComplete:function(){
+				if(this.song === ''){
+					this.displaySong = '';
+				}
+			}
 		}).start();
 	}
 
@@ -68,8 +89,8 @@ class Ticker{
 		}
 		this.showTween = new JakeTween({
 			on:this,
-			to:{scale:1},
-			time:500,
+			to:{tickerTweenYPos:0,musicTickerTweenYPos:0},
+			time:1000,
 			ease:JakeTween.easing.exponential.out
 		}).start();
 	}
@@ -80,57 +101,62 @@ class Ticker{
 		}
 		this.hideTween = new JakeTween({
 			on:this,
-			to:{scale:0},
-			time:500,
+			to:{tickerTweenYPos:300,musicTickerTweenYPos:300},
+			time:1000,
 			ease:JakeTween.easing.exponential.out
 		}).start();
 	}
 
 	draw(){
-		this.ctx.save();
-		this.frame.setConfigs({
-			color:'rgba(0,0,0,0.5)',
-			strokeColor:'rgba(255,255,255,0.5)',
-			fill:true,
-			stroke:true,
-			//angle:-Math.sin(piTimer)*(Math.PI/64),
-			scale:this.scale
-		}).draw();
-		this.ctx.clip();
+		//this.ctx.save();
+		//this.frame.setConfigs({
+		//	color:'rgba(0,0,0,0.5)',
+		//	strokeColor:'rgba(255,255,255,0.5)',
+		//	fill:true,
+		//	stroke:true,
+		//	//angle:-Math.sin(piTimer)*(Math.PI/64),
+		//	scale:this.scale
+		//}).draw();
+		//this.ctx.clip();
 
 		this.ctx.fillStyle = 'rgb(255,255,255)';
 		this.ctx.textAlign = 'center';
 		this.ctx.textBaseline="middle";
 		//this.ctx.globalCompositeOperation = "destination-out";
-		let spacer = "      ";
-		let text = this.primaryText;
-		let textWithSpacer = text+spacer;
-		let songText =  'Song Name: '+this.song;
-		let songTextWithSpacer = songText+spacer;
+
 		//this.ctx.fillText(text, this.canvas.width/2,this.canvas.height/2+215);
 
 		//this.ctx.fillText(songText, this.canvas.width/2,this.canvas.height/2+242);
-		//this.ctx.rotate(1);
+		this.ctx.save();
+		this.ctx.rotate(-0.1);
 
-
-		this.ctx.font = '900 30px "Roboto"';
-		if(this.ctx.measureText(text).width > this.width){
-			this.ctx.textAlign = 'left';
-			this.ctx.fillText(textWithSpacer+textWithSpacer,this.canvas.width/2-(this.width/2)-(this.ctx.measureText(textWithSpacer).width*this.scrollPosition),this.primaryTextYPosition);
-		}else {
-			this.ctx.textAlign = 'center';
-			this.ctx.fillText(text, this.canvas.width/2, this.primaryTextYPosition);
+		let text = '';
+		this.ctx.font = '700 100px Oswald';
+		this.ctx.textAlign = 'left';
+		let textLength = this.ctx.measureText(this.primaryText).width;
+		this.musicScrollTween.setConfig({time:100*textLength});
+		let textCount = 0;
+		while(textLength<this.canvas.width*2 || textCount < 2) {
+			textCount++;
+			text += this.primaryText+'    ';
+			textLength = this.ctx.measureText(text).width;
 		}
 
-		if(this.song.length > 0) {
-			this.ctx.font = '400 18px "Roboto"';
-			if (this.ctx.measureText(songText).width > this.width) {
-				this.ctx.textAlign = 'left';
-				this.ctx.fillText(songTextWithSpacer + songTextWithSpacer, this.canvas.width / 2 - (this.width / 2) - (this.ctx.measureText(songTextWithSpacer).width * this.scrollPosition), this.canvas.height / 2 + 242);
-			} else {
-				this.ctx.textAlign = 'center';
-				this.ctx.fillText(songText, this.canvas.width / 2, this.canvas.height / 2 + 242);
+		this.ctx.fillText(text,-100-textLength/textCount*this.scrollPosition,this.canvas.height-350+this.tickerTweenYPos);
+
+		if(this.displaySong.length > 0) {
+			let songText = '';
+			this.ctx.font = '400 40px Oswald';
+			this.ctx.textAlign = 'right';
+			let songTextLength = this.ctx.measureText(this.displaySong).width;
+			this.musicScrollTween.setConfig({time:10*songTextLength});
+			let songTextCount = 0;
+			while(songTextLength<this.canvas.width*2  || songTextCount < 2) {
+				songTextCount++;
+				songText += 'Song Name: '+this.displaySong+'    ';
+				songTextLength = this.ctx.measureText(songText).width;
 			}
+			this.ctx.fillText(songText, this.canvas.width+100+songTextLength/songTextCount*this.musicScrollPosition, this.canvas.height-290+this.musicTickerTweenYPos);
 		}
 		this.ctx.restore();
 	}

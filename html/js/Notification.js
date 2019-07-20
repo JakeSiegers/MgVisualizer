@@ -105,7 +105,7 @@ class StreamNotification{
 			stroke:true,
 		}).draw();
 		this.ctx.clip();
-		this.ctx.font = '900 20px Roboto';
+		this.ctx.font = '20px "Press Start 2P"';
 		this.ctx.fillStyle = 'rgb(255,255,255)';
 		this.ctx.textBaseline= 'middle';
 		let text = this.currentText;
