@@ -74,7 +74,7 @@ Ext.define('MG.view.TextChangers', {
 						{
 							xtype: 'textfield',
 							fieldLabel: 'Primary Text',
-							emptyText: 'McLeodGaming @ Smash Con 2018',
+							emptyText: 'SSF2 at Smash Con 2019',
 							itemId:'primaryText',
 							width:400,
 							labelAlign:'top'
@@ -343,13 +343,13 @@ Ext.define('MG.view.TextChangers', {
 	updateText:function(){
 		let primaryText = this.queryById('primaryText').getValue();
 		if(primaryText.trim() === ''){
-			primaryText = 'McLeodGaming @ Smash Con 2018';
+			primaryText = 'SSF2 at Smash Con 2019';
 		}
 		window.localStorage.setItem('primaryText',primaryText);
 		localSocket.send({to: 'stream', action: 'updateText',text:primaryText});
 	},
 	resetText:function(){
-		localSocket.send({to: 'stream', action: 'updateText',text:'McLeodGaming @ Smash Con 2018'});
+		localSocket.send({to: 'stream', action: 'updateText',text:'SSF2 at Smash Con 2019'});
 	},
 	onAxisLabelRender: function (axis, label, layoutContext) { // only render interger values
 		let seconds = Math.floor(label%60);

@@ -24,7 +24,7 @@ class Ticker{
 			lineWidth:2
 		});
 		this.primaryTextYPosition = this.canvas.height/2+225;
-		this.primaryText = 'McLeodGaming @ Smash Con 2018';
+		this.primaryText = 'SSF2 at Smash Con 2019';
 	}
 
 	generatePath(){
@@ -90,13 +90,11 @@ class Ticker{
 		this.ctx.save();
 		this.frame.setConfigs({
 			color:'rgba(0,0,0,0.5)',
+			strokeColor:'rgba(255,255,255,0.5)',
 			fill:true,
+			stroke:true,
 			//angle:-Math.sin(piTimer)*(Math.PI/64),
 			scale:this.scale
-		}).draw();
-		this.frame.setConfigs({
-			color:'rgba(255,255,255,0.5)',
-			fill:false
 		}).draw();
 		this.ctx.clip();
 
@@ -112,6 +110,8 @@ class Ticker{
 		//this.ctx.fillText(text, this.canvas.width/2,this.canvas.height/2+215);
 
 		//this.ctx.fillText(songText, this.canvas.width/2,this.canvas.height/2+242);
+		//this.ctx.rotate(1);
+
 
 		this.ctx.font = '900 30px "Roboto"';
 		if(this.ctx.measureText(text).width > this.width){

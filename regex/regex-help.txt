@@ -1,0 +1,10 @@
+Regex to change
+http://professorcloud.com/svg-to-canvas/
+to PathDrawer config arrays
+
+ctx.bezierCurveTo\((.*),(.*),(.*),(.*),(.*),(.*)\);
+{cp1x:$1,cp1y:$2,cp2x:$3,cp2y:$4,x:$5,y:$6}
+
+ctx.moveTo\((.*),(.*)\);
+ctx.lineTo\((.*),(.*)\);
+{x:$1,y:$2}

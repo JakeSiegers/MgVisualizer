@@ -23,12 +23,13 @@ class MiniTicker{
 			ctx:this.ctx,
 			points:this.generatePath(),
 			fill:true,
+			stroke:false,
 			drawX: this.x,
 			drawY: this.y,
 			lineWidth:2
 		});
 		this.primaryTextYPosition = this.y;
-		this.primaryText = 'McLeodGaming @ Smash Con 2018';
+		this.primaryText = 'SSF2 at Smash Con 2019';
 		this.showing = false;
 
 		this.notificationYPosition = this.y+this.height;
@@ -154,13 +155,10 @@ class MiniTicker{
 		this.ctx.save();
 		this.frame.setConfigs({
 			color:'rgba(0,0,0,0.5)',
+			strokeColor:'rgba(255,255,255,0.5)',
 			drawX:this.x,
 			fill:true,
-		}).draw();
-		this.frame.setConfigs({
-			color:'rgba(255,255,255,0.5)',
-			drawX:this.x,
-			fill:false
+			stroke:true
 		}).draw();
 		this.ctx.clip();
 

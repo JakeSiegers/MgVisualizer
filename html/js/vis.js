@@ -3,19 +3,17 @@
 */
 
 class MgVisualizer{
-	constructor(websocketMode){
+	constructor(){
 
-		this.websocketMode = websocketMode;
 		this.sock = null;
-		if(this.websocketMode){
-			document.getElementById('infoBox').style.display = 'none';
-			this.sock = new SocketHelper({
-				url:document.location.host+'/webSocket?user=stream',
-				onMessage:this.socketMessageReceived,
-				scope:this
-			});
-			this.sock.connect();
-		}
+
+		this.sock = new SocketHelper({
+			url:document.location.host+'/webSocket?user=stream',
+			onMessage:this.socketMessageReceived,
+			scope:this
+		});
+		this.sock.connect();
+
 
 		this.audioCtx = null;
 
@@ -71,16 +69,16 @@ class MgVisualizer{
 		this.mgBorder = new PathDrawer({
 			drawX:this.canvas.width/2,
 			drawY:this.canvas.height/2,
-			points:points,
+			points:ssf2,
 			ctx:this.overlayCtx,
-			lineWidth:20
+			lineWidth:5
 		});
 		this.mgBgBorder = new PathDrawer({
 			drawX:this.canvas.width/2,
 			drawY:this.canvas.height/2,
-			points:points,
+			points:ssf2,
 			ctx:this.canvasCtx,
-			lineWidth:20
+			lineWidth:5
 		});
 
 
@@ -139,14 +137,27 @@ class MgVisualizer{
 		this.recentBeatPeaks = [];
 		this.beatPeakCap = 1;
 
-		let audioDom = document.getElementById('audio_file');
-		audioDom.onchange = this.audioFileChange.bind(this);
-
 		document.onkeypress = this.keypress.bind(this);
 
 		this.logoSubtractScale = 0;
 
-		this.logoRotation = Math.PI;
+		this.trigTimer = 0;
+		this.logoRotationTween = new JakeTween({
+			on:this,
+			to:{trigTimer:Math.PI*2},
+			time:30000,
+			loop:true
+		}).start();
+
+		this.logoWallPosition = 0;
+		this.logoRotationTween = new JakeTween({
+			on:this,
+			to:{logoWallPosition:1},
+			time:30000,
+			loop:true
+		}).start();
+
+		this.logoRotation = 0;
 		this.logoRotationTween = new JakeTween({
 			on:this,
 			to:{logoRotation:Math.PI},
@@ -163,6 +174,10 @@ class MgVisualizer{
 			ease:JakeTween.easing.quadratic.out,
 			neverDestroy:true
 		});
+
+		this.logoX = this.canvas.width/2;
+		this.logoY = this.canvas.height/2;
+		this.logoAngle = Math.random()*Math.PI*2;
 
 		this.notification = new StreamNotification(this.overlayCanvas);
 		this.streamTimer = new StreamTimer(this.overlayCanvas);
@@ -227,7 +242,7 @@ class MgVisualizer{
 				this.logoRotation = 0;
 				new JakeTween({
 					on:this,
-					to:{logoSubtractScale:0,logoRotation:Math.PI},
+					to:{logoSubtractScale:0,logoRotation:Math.PI,percent:1},
 					time:500,
 					ease:JakeTween.easing.back.out
 				}).start();
@@ -255,7 +270,7 @@ class MgVisualizer{
 					this.miniTicker.show();
 					new JakeTween({
 						on:this,
-						to:{logoSubtractScale:1,logoRotation:0},
+						to:{logoSubtractScale:1,logoRotation:0,percent:0},
 						time:500,
 						ease:JakeTween.easing.back.in
 					}).start();
@@ -265,16 +280,6 @@ class MgVisualizer{
 			default:
 				console.error('Unknown action "'+message.action+'"');
 				break;
-		}
-	}
-
-	audioFileChange(event){
-		//console.log(arguments);
-		document.getElementById('infoBox').style.display = 'none';
-		if(event.srcElement.files.length > 0){
-			this.musicQueue = event.srcElement.files;
-			this.currentSong = 0;
-			this.loadSongFromBrowse(this.musicQueue[0]);
 		}
 	}
 
@@ -298,21 +303,6 @@ class MgVisualizer{
 				break;
 		}
 	};
-
-	loadSongFromBrowse(file){
-		this.stop();
-		this.loadingSong = true;
-		this.parseFileName(url);
-		let reader = new FileReader();
-		reader.onload = function() {
-			this.audioCtx.decodeAudioData(reader.result, function(newBuffer){
-				this.currentBuffer = newBuffer;
-				this.play();
-				this.ticker.show();
-			}.bind(this));
-		}.bind(this);
-		reader.readAsArrayBuffer(file);
-	}
 
 	loadSongViaAjax(url){
 		if(this.loadingSong || typeof url !== 'string' || url.trim().length === 0){
@@ -408,12 +398,7 @@ class MgVisualizer{
 			if(this.currentSong >= this.musicQueue.length){
 				this.currentSong = 0;
 			}
-
-			if(this.websocketMode){
-				this.loadSongViaAjax(this.musicQueue[this.currentSong]);
-			}else{
-				this.loadSongFromBrowse(this.musicQueue[this.currentSong]);
-			}
+			this.loadSongViaAjax(this.musicQueue[this.currentSong]);
 		}.bind(this);
 	}
 
@@ -465,12 +450,12 @@ class MgVisualizer{
 		this.stats.begin();
 		this.overlayCtx.clearRect(0, 0, this.overlayCanvas.width, this.overlayCanvas.height);
 		JakeTween.update();
+		this.drawVisuals();
+		this.drawLogo();
 		this.ticker.draw();
 		this.miniTicker.draw();
 		this.notification.draw();
 		this.streamTimer.draw();
-		this.drawVisuals();
-		this.drawLogo();
 		requestAnimationFrame(this.draw.bind(this));
 		this.stats.end();
 	}
@@ -489,13 +474,13 @@ class MgVisualizer{
 		this.musicAnalyser.getByteTimeDomainData(this.dataArray);
 		this.beatAnalyser.getByteTimeDomainData(this.lowPassDataArray);
 
-		//this.canvasCtx.fillStyle = 'rgba(0, 0, 0, 0.03)';
-		//this.canvasCtx.fillRect(0,0,canvas.width,canvas.height);
+		this.canvasCtx.fillStyle = 'rgba(0, 0, 0,0.1)';
+		this.canvasCtx.fillRect(0,0,this.canvas.width,this.canvas.height);
 
 		let beatVal = Math.abs(this.lowPassDataArray[0]-128)/this.currentSensitivity;//64;
 		if(beatVal >= this.beatPeakCap && !this.recentBeatPeaks.includes(this.beatPeakCap)){
 			this.logoRotateDirection *= -1;
-			this.logoRotationTween.setConfig({to:{logoRotation:Math.PI*this.logoRotateDirection}}).start();
+			this.logoRotationTween.setConfig({to:{logoRotation:Math.PI*2*this.logoRotateDirection}}).start();
 			beatVal = this.beatPeakCap;
 			this.currentColor++;
 			if(this.currentColor === this.colors.length){
@@ -508,7 +493,7 @@ class MgVisualizer{
 		}
 
 		//Tone this down a bit for the logo bouncing.
-		this.logoBeatValSmoothed = this.beatValSmoothed/3;
+		//this.logoBeatValSmoothed = this.beatValSmoothed/3;
 		this.beatValTween.setConfig({to:{beatValSmoothed:beatVal}}).start();
 
 
@@ -521,24 +506,32 @@ class MgVisualizer{
 		this.canvasCtx.fillStyle = '#ffffff';
 
 		//this.drawCircle(rgb,this.dataArray);
-		this.mgBgBorder.setConfigs({
-			scale: this.logoBeatValSmoothed + 1,
-			color: rgb,
-			angle: this.logoRotation,
-			fill: false
-		}).draw();
+		for(let x = 0;x<4;x++) {
+			for (let y = 0; y < 4; y++) {
+				this.mgBgBorder.setConfigs({
+					scale: 0.1*Math.sin(this.trigTimer) + 0.5,
+					color: rgb,
+					strokeColor: rgb,
+					angle: 0.1*Math.sin(this.trigTimer),
+					fill: false,
+					stroke: true,
+					drawX:((this.logoX-1000)+(500*x))+(500*this.logoWallPosition),
+					drawY:((this.logoY-1000)+(600*y))+(600*this.logoWallPosition),
+				}).draw();
+			}
+		}
 
 
-		let fadeSpeed = Math.abs(this.beatValSmoothed)*30+5;
+		let fadeSpeed = Math.abs(this.beatValSmoothed)*15+5;
 		//fadeSpeed = 15;
 		if(this.stopped){
 			fadeSpeed = 30;
 		}
-		if(this.flowIn){
+		//if(this.flowIn){
 			this.canvasCtx.drawImage(this.canvasCtx.canvas, 0, 0, this.canvas.width, this.canvas.height, fadeSpeed, fadeSpeed, this.canvas.width - fadeSpeed*2, this.canvas.height - fadeSpeed*2);
-		}else{
-			this.canvasCtx.drawImage(this.canvasCtx.canvas, 0, 0, this.canvas.width, this.canvas.height, -fadeSpeed, -fadeSpeed, this.canvas.width + fadeSpeed*2, this.canvas.height + fadeSpeed*2);
-		}
+		//}else{
+			//this.canvasCtx.drawImage(this.canvasCtx.canvas, 0, 0, this.canvas.width, this.canvas.height, -fadeSpeed, -fadeSpeed, this.canvas.width + fadeSpeed*2, this.canvas.height + fadeSpeed*2);
+		//}
 
 	}
 
@@ -546,20 +539,28 @@ class MgVisualizer{
 		if(this.logoSubtractScale === 1){
 			return;
 		}
-		this.mgBorder.setConfigs({
-			scale:this.logoBeatValSmoothed+1-this.logoSubtractScale,
-			color:'rgb(0,0,0)',
-			angle:this.logoRotation,
-			lineWidth:20-(20*this.logoSubtractScale),
-			fill:true
-		}).draw();
-		this.mgBorder.setConfigs({
-			color:'rgb(255,255,255)',
-			fill:false
-		}).draw();
+		for(let x = 0;x<4;x++) {
+			for (let y = 0; y < 4; y++) {
+				this.mgBorder.setConfigs({
+					scale: 0.1 * Math.sin(this.trigTimer) + 0.5 - this.logoSubtractScale,
+					color: 'rgb(0,0,0)',
+					strokeColor: 'rgb(33,33,33)',
+					angle: 0.1 * Math.sin(this.trigTimer),
+					//lineWidth:5-(10*this.logoSubtractScale),
+					fill: true,
+					stroke: true,
+					drawX:((this.logoX-1000)+(500*x))+(500*this.logoWallPosition),
+					drawY:((this.logoY-1000)+(600*y))+(600*this.logoWallPosition),
+				}).draw();
+			}
+		}
+		//this.mgBorder.setConfigs({
+		//	color:'rgb(255,255,255)',
+		//	fill:false
+		//}).draw();
 		let logoWidth = 150*(this.logoBeatValSmoothed+1-this.logoSubtractScale);
 		let logoHeight = 140*(this.logoBeatValSmoothed+1-this.logoSubtractScale);
-		this.overlayCtx.drawImage(this.fist,this.canvas.width/2-logoWidth/2,this.canvas.height/2-logoHeight/2,logoWidth,logoHeight);
+		//this.overlayCtx.drawImage(this.fist,this.canvas.width/2-logoWidth/2,this.canvas.height/2-logoHeight/2,logoWidth,logoHeight);
 	}
 
 	drawCircle(color,data){
