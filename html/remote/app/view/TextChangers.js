@@ -188,7 +188,6 @@ Ext.define('MG.view.TextChangers', {
 					items: [
 						{
 							xtype: 'button',
-							flex: 1,
 							text: 'MUSIC SCENE',
 							listeners:{
 								click:function(){
@@ -200,7 +199,6 @@ Ext.define('MG.view.TextChangers', {
 						},
 						{
 							xtype: 'button',
-							flex: 1,
 							text: 'SSF2 SCENE',
 							listeners:{
 								click:function(){
@@ -227,7 +225,6 @@ Ext.define('MG.view.TextChangers', {
 					items: [
 						{
 							xtype: 'button',
-							flex: 1,
 							text: 'PLAY MUSIC',
 							listeners:{
 								click:function(){
@@ -238,7 +235,6 @@ Ext.define('MG.view.TextChangers', {
 						},
 						{
 							xtype: 'button',
-							flex: 1,
 							text: 'STOP MUSIC',
 							listeners:{
 								click:function(){
@@ -247,6 +243,31 @@ Ext.define('MG.view.TextChangers', {
 								scope:this
 							}
 						}
+					]
+				},
+				{
+					xtype: 'container',
+					flex: 1,
+					defaults: {
+						margin: '5 5 0 5',
+						height:50,
+						width:200
+					},
+					layout: {
+						type: 'hbox',
+						align: 'stretch'
+					},
+					items: [
+						{
+							xtype: 'button',
+							text: 'PAUSE MUSIC',
+							listeners:{
+								click:function(){
+									localSocket.send({"action":"pause","to":"stream"});
+								},
+								scope:this
+							}
+						},
 					]
 				}
 			]

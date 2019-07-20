@@ -99,14 +99,10 @@ class StreamNotification{
 		this.ctx.save();
 		this.frame.setConfigs({
 			color:'rgba(0,0,0,0.5)',
+			strokeColor:'rgba(255,255,255,0.5)',
 			scale:this.scale,
 			fill:true,
-			//angle:-Math.sin(piTimer)*(Math.PI/64),
-		}).draw();
-		this.frame.setConfigs({
-			color:'rgba(255,255,255,0.5)',
-			scale:this.scale,
-			fill:false
+			stroke:true,
 		}).draw();
 		this.ctx.clip();
 		this.ctx.font = '900 20px Roboto';

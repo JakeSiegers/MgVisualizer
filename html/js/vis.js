@@ -67,18 +67,12 @@ class MgVisualizer{
 		];
 
 		this.mgBorder = new PathDrawer({
-			drawX:this.canvas.width/2,
-			drawY:this.canvas.height/2,
 			points:ssf2,
 			ctx:this.overlayCtx,
-			lineWidth:5
 		});
 		this.mgBgBorder = new PathDrawer({
-			drawX:this.canvas.width/2,
-			drawY:this.canvas.height/2,
 			points:ssf2,
 			ctx:this.canvasCtx,
-			lineWidth:5
 		});
 
 
@@ -130,19 +124,24 @@ class MgVisualizer{
 			{r:156,g:39,b:176} //Purple
 		];
 
-		this.colors = this.mgColors;
+		this.vaporwaveColors = [
+			{r:255,g:113,b:206},
+			{r:1,g:205,b:254},
+			{r:5,g:255,b:161},
+			{r:185,g:103,b:255},
+			{r:255,g:251,b:150}
+		];
+
+		this.colors = this.vaporwaveColors;
 		this.currentColor = 0;
 
-		this.logoRotateDirection = 1;
 		this.recentBeatPeaks = [];
 		this.beatPeakCap = 1;
 
 		document.onkeypress = this.keypress.bind(this);
 
-		this.logoSubtractScale = 0;
-
 		this.trigTimer = 0;
-		this.logoRotationTween = new JakeTween({
+		new JakeTween({
 			on:this,
 			to:{trigTimer:Math.PI*2},
 			time:30000,
@@ -150,22 +149,15 @@ class MgVisualizer{
 		}).start();
 
 		this.logoWallPosition = 0;
-		this.logoRotationTween = new JakeTween({
+		new JakeTween({
 			on:this,
 			to:{logoWallPosition:1},
 			time:30000,
 			loop:true
 		}).start();
 
-		this.logoRotation = 0;
-		this.logoRotationTween = new JakeTween({
-			on:this,
-			to:{logoRotation:Math.PI},
-			time:2000,
-			ease:JakeTween.easing.quadratic.out,
-			neverDestroy:true
-		});
-
+		this.logoScale = 1;
+//
 		this.logoBeatValSmoothed = this.beatValSmoothed = 0;
 		this.beatValTween = new JakeTween({
 			on:this,
@@ -214,7 +206,10 @@ class MgVisualizer{
 				});
 				break;
 			case 'stop':
-				this.stopMusicAndVisualizer();
+				this.stop();
+				break;
+			case 'pause':
+				this.pause();
 				break;
 			case 'notification':
 				this.notification.displayNotification(message);
@@ -239,12 +234,11 @@ class MgVisualizer{
 				this.currentScene = 'music';
 				this.miniTicker.hide();
 				this.ticker.show();
-				this.logoRotation = 0;
 				new JakeTween({
 					on:this,
-					to:{logoSubtractScale:0,logoRotation:Math.PI,percent:1},
+					to:{logoScale:1},
 					time:500,
-					ease:JakeTween.easing.back.out
+					ease:JakeTween.easing.exponential.out,
 				}).start();
 				Ajax.request({
 					url:'/api/getMusicQueue',
@@ -262,18 +256,18 @@ class MgVisualizer{
 				if(this.loadingSong){
 					return;
 				}
+				new JakeTween({
+					on:this,
+					to:{logoScale:0},
+					time:500,
+					ease:JakeTween.easing.exponential.out,
+				}).start();
 				this.currentScene = 'ssf2';
 				this.streamTimer.stopTimer();
 				this.ticker.hide();
 				this.stopMusicAndVisualizer();
 				setTimeout(function(){
 					this.miniTicker.show();
-					new JakeTween({
-						on:this,
-						to:{logoSubtractScale:1,logoRotation:0,percent:0},
-						time:500,
-						ease:JakeTween.easing.back.in
-					}).start();
 				}.bind(this),1000);
 				break;
 
@@ -388,7 +382,12 @@ class MgVisualizer{
 		this.renderVisualizer = true;
 		this.stopped = false;
 
-		this.canvasOpacity = 1;
+		new JakeTween({
+			on:this,
+			to:{canvasOpacity:1},
+			ease:JakeTween.easing.quadratic.out,
+			time:1000
+		}).start();
 
 		this.musicSource.onended = function(){
 			if(this.loadingSong || this.stopped){
@@ -409,12 +408,12 @@ class MgVisualizer{
 			return;
 		}
 		let elapsed = this.audioCtx.currentTime - this.startTime;
-		this.stop();
+		this.stop(true);
 		this.pauseTime = elapsed;
 		this.paused = true;
 	}
 
-	stop(){
+	stop(doNotClearTitle){
 		this.stopped = true;
 		this.paused = false;
 		if(this.musicSource){
@@ -427,7 +426,9 @@ class MgVisualizer{
 		}
 		this.pauseTime = 0;
 		this.startTime = 0;
-		this.ticker.setSong('');
+		if(!doNotClearTitle){
+			this.ticker.setSong('');
+		}
 	}
 
 	stopMusicAndVisualizer(){
@@ -438,11 +439,13 @@ class MgVisualizer{
 		this.stopTimeout = new JakeTween({
 			on:this,
 			to:{canvasOpacity:0},
+			ease:JakeTween.easing.quadratic.out,
 			time:1000,
 			onComplete:function(){
 				this.canvasCtx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 				this.renderVisualizer = false;
-			}
+			},
+			scope:this
 		}).start();
 	}
 
@@ -451,7 +454,6 @@ class MgVisualizer{
 		this.overlayCtx.clearRect(0, 0, this.overlayCanvas.width, this.overlayCanvas.height);
 		JakeTween.update();
 		this.drawVisuals();
-		this.drawLogo();
 		this.ticker.draw();
 		this.miniTicker.draw();
 		this.notification.draw();
@@ -461,40 +463,37 @@ class MgVisualizer{
 	}
 
 	drawVisuals(){
-		if(!this.renderVisualizer){
-			return;
-		}
-
 		this.canvas.style.opacity = this.canvasOpacity;
-
-		//if(this.paused || !this.musicPlaying){
-		//	return;
-		//}
-
-		this.musicAnalyser.getByteTimeDomainData(this.dataArray);
-		this.beatAnalyser.getByteTimeDomainData(this.lowPassDataArray);
-
 		this.canvasCtx.fillStyle = 'rgba(0, 0, 0,0.1)';
 		this.canvasCtx.fillRect(0,0,this.canvas.width,this.canvas.height);
 
-		let beatVal = Math.abs(this.lowPassDataArray[0]-128)/this.currentSensitivity;//64;
-		if(beatVal >= this.beatPeakCap && !this.recentBeatPeaks.includes(this.beatPeakCap)){
-			this.logoRotateDirection *= -1;
-			this.logoRotationTween.setConfig({to:{logoRotation:Math.PI*2*this.logoRotateDirection}}).start();
-			beatVal = this.beatPeakCap;
-			this.currentColor++;
-			if(this.currentColor === this.colors.length){
-				this.currentColor = 0;
-			}
-		}
-		this.recentBeatPeaks.push(beatVal);
-		if(this.recentBeatPeaks.length > 1){
-			this.recentBeatPeaks.shift();
-		}
+		if(this.renderVisualizer){
 
-		//Tone this down a bit for the logo bouncing.
-		//this.logoBeatValSmoothed = this.beatValSmoothed/3;
-		this.beatValTween.setConfig({to:{beatValSmoothed:beatVal}}).start();
+			//if(this.paused || !this.musicPlaying){
+			//	return;
+			//}
+
+			this.musicAnalyser.getByteTimeDomainData(this.dataArray);
+			this.beatAnalyser.getByteTimeDomainData(this.lowPassDataArray);
+
+
+			let beatVal = Math.abs(this.lowPassDataArray[0]-128)/this.currentSensitivity;//64;
+			if(beatVal >= this.beatPeakCap && !this.recentBeatPeaks.includes(this.beatPeakCap)){
+				beatVal = this.beatPeakCap;
+				this.currentColor++;
+				if(this.currentColor === this.colors.length){
+					this.currentColor = 0;
+				}
+			}
+			this.recentBeatPeaks.push(beatVal);
+			if(this.recentBeatPeaks.length > 1){
+				this.recentBeatPeaks.shift();
+			}
+
+			//Tone this down a bit for the logo bouncing.
+			//this.logoBeatValSmoothed = this.beatValSmoothed/3;
+			this.beatValTween.setConfig({to:{beatValSmoothed:beatVal}}).start();
+		}
 
 
 		let r = Math.floor((this.colors[this.currentColor].r)*this.beatValSmoothed);
@@ -508,16 +507,49 @@ class MgVisualizer{
 		//this.drawCircle(rgb,this.dataArray);
 		for(let x = 0;x<4;x++) {
 			for (let y = 0; y < 4; y++) {
+
+				let drawX = ((this.logoX-1000)+(500*x))+(500*this.logoWallPosition);
+				let drawY = ((this.logoY-1000)+(600*y))+(600*this.logoWallPosition);
+				let angle = 0.1*Math.sin(this.trigTimer);
+				let scale = (0.1*Math.sin(this.trigTimer) + 0.5)*this.logoScale;
+				let lineWidth = 5 * this.logoScale;
+
 				this.mgBgBorder.setConfigs({
-					scale: 0.1*Math.sin(this.trigTimer) + 0.5,
+					scale: scale,
 					color: rgb,
 					strokeColor: rgb,
-					angle: 0.1*Math.sin(this.trigTimer),
+					angle: angle,
 					fill: false,
 					stroke: true,
-					drawX:((this.logoX-1000)+(500*x))+(500*this.logoWallPosition),
-					drawY:((this.logoY-1000)+(600*y))+(600*this.logoWallPosition),
+					drawX:drawX,
+					drawY:drawY,
+					lineWidth:lineWidth
 				}).draw();
+
+				//this.overlayCtx.save();
+				this.mgBorder.setConfigs({
+					scale: scale,
+					color: 'rgb(0,0,0)',
+					strokeColor: 'rgb(20,20,20)',
+					angle: angle,
+					fill: true,
+					stroke: true,
+					drawX:drawX,
+					drawY:drawY,
+					lineWidth:lineWidth
+				}).draw();
+				//this.overlayCtx.clip();
+
+				//fire!
+				//this.overlayCtx.fillStyle = 'rgb(255,0,255)';
+				//this.overlayCtx.fillRect(0,0,this.canvas.width,this.canvas.height);
+
+				//this.overlayCtx.restore();
+				//this.mgBorder.setConfigs({
+				//	fill: false,
+				//	stroke: true,
+				//}).draw();
+
 			}
 		}
 
@@ -533,34 +565,6 @@ class MgVisualizer{
 			//this.canvasCtx.drawImage(this.canvasCtx.canvas, 0, 0, this.canvas.width, this.canvas.height, -fadeSpeed, -fadeSpeed, this.canvas.width + fadeSpeed*2, this.canvas.height + fadeSpeed*2);
 		//}
 
-	}
-
-	drawLogo(){
-		if(this.logoSubtractScale === 1){
-			return;
-		}
-		for(let x = 0;x<4;x++) {
-			for (let y = 0; y < 4; y++) {
-				this.mgBorder.setConfigs({
-					scale: 0.1 * Math.sin(this.trigTimer) + 0.5 - this.logoSubtractScale,
-					color: 'rgb(0,0,0)',
-					strokeColor: 'rgb(33,33,33)',
-					angle: 0.1 * Math.sin(this.trigTimer),
-					//lineWidth:5-(10*this.logoSubtractScale),
-					fill: true,
-					stroke: true,
-					drawX:((this.logoX-1000)+(500*x))+(500*this.logoWallPosition),
-					drawY:((this.logoY-1000)+(600*y))+(600*this.logoWallPosition),
-				}).draw();
-			}
-		}
-		//this.mgBorder.setConfigs({
-		//	color:'rgb(255,255,255)',
-		//	fill:false
-		//}).draw();
-		let logoWidth = 150*(this.logoBeatValSmoothed+1-this.logoSubtractScale);
-		let logoHeight = 140*(this.logoBeatValSmoothed+1-this.logoSubtractScale);
-		//this.overlayCtx.drawImage(this.fist,this.canvas.width/2-logoWidth/2,this.canvas.height/2-logoHeight/2,logoWidth,logoHeight);
 	}
 
 	drawCircle(color,data){

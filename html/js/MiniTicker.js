@@ -22,8 +22,10 @@ class MiniTicker{
 		this.frame = new PathDrawer({
 			ctx:this.ctx,
 			points:this.generatePath(),
+			color:'rgba(0,0,0,0.5)',
+			strokeColor:'rgba(255,255,255,0.5)',
 			fill:true,
-			stroke:false,
+			stroke:true,
 			drawX: this.x,
 			drawY: this.y,
 			lineWidth:2
@@ -36,35 +38,16 @@ class MiniTicker{
 		this.notificationText = '';
 		this.notification = null;
 
-		this.scale = 0.3;
+		this.scale = 0.1;
 		this.mgBorder = new PathDrawer({
+			color:'rgb(0,0,0)',
+			strokeColor:'rgb(255,255,255)',
 			drawX:this.x+this.width/2,
 			drawY:this.y,
-			points:[
-				{x:678,y:290.8},
-				{x:728.1,y:256.2},
-				{x:742.3,y:309.4},
-				{x:797.1,y:314.2},
-				{x:773.8,y:364},
-				{x:812.7,y:402.9},
-				{x:762.9,y:426.1},
-				{x:767.7,y:480.9},
-				{x:714.5,y:466.7},
-				{x:683,y:511.8},
-				{x:651.5,y:466.7},
-				{x:598.3,y:480.9},
-				{x:603.1,y:426.1},
-				{x:553.3,y:402.9},
-				{x:592.2,y:364},
-				{x:568.9,y:314.2},
-				{x:623.7,y:309.4},
-				{x:637.9,y:256.2},
-				{x:688,y:290.8}
-			],
+			points:ssf2,
 			ctx:this.ctx,
 			scale:this.scale,
-			lineWidth:6,
-			angle:Math.PI
+			lineWidth:1
 		});
 	}
 
@@ -107,12 +90,11 @@ class MiniTicker{
 	generatePath(){
 		let tipWidth = (this.height/2);
 		return [
-			{x:tipWidth,y:0},
-			{x:0,y:this.height/2},
-			{x:tipWidth,y:this.height},
-			{x:this.width+tipWidth,y:this.height},
-			{x:this.width+tipWidth*2,y:this.height/2},
-			{x:this.width+tipWidth,y:0},
+			{x:0,y:0},
+			{x:0,y:this.height},
+			{x:this.width+tipWidth*1.5,y:this.height},
+			{x:this.width+tipWidth*2.7,y:this.height/2},
+			{x:this.width+tipWidth*3,y:0},
 			{x:tipWidth,y:0}
 		]
 	}
@@ -154,11 +136,7 @@ class MiniTicker{
 		}
 		this.ctx.save();
 		this.frame.setConfigs({
-			color:'rgba(0,0,0,0.5)',
-			strokeColor:'rgba(255,255,255,0.5)',
 			drawX:this.x,
-			fill:true,
-			stroke:true
 		}).draw();
 		this.ctx.clip();
 
@@ -189,18 +167,23 @@ class MiniTicker{
 		}
 
 		this.ctx.restore();
+		this.ctx.save();
 		this.mgBorder.setConfigs({
-			color:'rgb(0,0,0)',
 			drawX:this.x+this.width/2+30,
-			fill:true
+			fill:true,
+			stroke:false,
 		}).draw();
+		this.ctx.clip();
+
+		//Draw fire!
+		//this.ctx.fillStyle = 'rgb(0,255,0)';
+		//this.ctx.fillRect(0,0,this.canvas.width,this.canvas.height);
+
+		this.ctx.restore();
 		this.mgBorder.setConfigs({
-			color:'rgb(255,255,255)',
-			fill:false
+			fill:false,
+			stroke:true,
 		}).draw();
 
-		let logoWidth = 150*this.scale;
-		let logoHeight = 140*this.scale;
-		this.ctx.drawImage(this.fist,(this.x+this.width/2+30)-logoWidth/2,this.y-logoHeight/2,logoWidth,logoHeight);
 	}
 }
