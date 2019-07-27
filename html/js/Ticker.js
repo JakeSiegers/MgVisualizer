@@ -134,7 +134,7 @@ class Ticker{
 		this.ctx.font = '700 100px Oswald';
 		this.ctx.textAlign = 'left';
 		let textLength = this.ctx.measureText(this.primaryText).width;
-		this.musicScrollTween.setConfig({time:100*textLength});
+		this.scrollTween.setConfig({time:10000+10*textLength});
 		let textCount = 0;
 		while(textLength<this.canvas.width*2 || textCount < 2) {
 			textCount++;
@@ -149,7 +149,7 @@ class Ticker{
 			this.ctx.font = '400 40px Oswald';
 			this.ctx.textAlign = 'right';
 			let songTextLength = this.ctx.measureText(this.displaySong).width;
-			this.musicScrollTween.setConfig({time:10*songTextLength});
+			this.musicScrollTween.setConfig({time:10000+10*songTextLength});
 			let songTextCount = 0;
 			while(songTextLength<this.canvas.width*2  || songTextCount < 2) {
 				songTextCount++;
