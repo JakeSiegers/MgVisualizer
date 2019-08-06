@@ -2,7 +2,8 @@ package main
 
 import (
 	"crypto/hmac"
-	"crypto/sha256"
+	"crypto/sha1"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"github.com/gorilla/websocket"
@@ -10,6 +11,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -96,17 +98,30 @@ func httpHandler(response http.ResponseWriter, request *http.Request) {
 
 		signature := request.Header.Get("X-Hub-Signature")
 
+		if !verifySignature([]byte(secret), signature, body) {
+			log.Println("DENIED")
+			response.WriteHeader(http.StatusNotFound)
+		}else{
+			log.Println("Success!")
+			from := gjson.Get(string(body), "data.#.from_id")
+			for _, id := range from.Array() {
+				socketWatcher.broadcast <- id.String()
+			}
+		}
+		/*
+		signature := request.Header.Get("X-Hub-Signature")
+
 		key := []byte(secret)
 		shaObj := hmac.New(sha256.New, key)
 		shaObj.Write(body)
 		hash := shaObj.Sum(nil)
-		//stringHash := fmt.Sprintf("%x", hash)
-		log.Printf("Looking For Hash: %s\n",hash)
+		stringHash := fmt.Sprintf("%x", hash)
+		log.Printf("Looking For Hash: %s\n" + stringHash)
 
 		if len(signature) > 7 {
 			foundHash := substr(signature, 7, len(signature))
 			log.Printf("Found Hash: %s\n", foundHash)
-			if foundHash == string(hash) {
+			if foundHash == stringHash {
 				log.Println("Success!")
 				from := gjson.Get(string(body), "data.#.from_id")
 				for _, id := range from.Array() {
@@ -117,11 +132,33 @@ func httpHandler(response http.ResponseWriter, request *http.Request) {
 		}
 		log.Println("DENIED")
 		response.WriteHeader(http.StatusNotFound)
+		 */
 		break
 	default:
 		log.Println("OTHER REQUEST")
 		response.WriteHeader(http.StatusNotFound)
 	}
+}
+
+func verifySignature(secret []byte, signature string, body []byte) bool {
+
+	const signaturePrefix = "sha1="
+	const signatureLength = 45 // len(SignaturePrefix) + len(hex(sha1))
+
+	if len(signature) != signatureLength || !strings.HasPrefix(signature, signaturePrefix) {
+		return false
+	}
+
+	actual := make([]byte, 20)
+	hex.Decode(actual, []byte(signature[5:]))
+
+	return hmac.Equal(signBody(secret, body), actual)
+}
+
+func signBody(secret, body []byte) []byte {
+	computed := hmac.New(sha1.New, secret)
+	computed.Write(body)
+	return []byte(computed.Sum(nil))
 }
 
 func substr(s string, pos, length int) string {
