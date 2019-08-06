@@ -2,7 +2,7 @@ package main
 
 import (
 	"crypto/hmac"
-	"crypto/sha1"
+	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -142,7 +142,7 @@ func httpHandler(response http.ResponseWriter, request *http.Request) {
 
 func verifySignature(secret []byte, signature string, body []byte) bool {
 
-	const signaturePrefix = "sha1="
+	const signaturePrefix = "sha256="
 	const signatureLength = 45 // len(SignaturePrefix) + len(hex(sha1))
 	log.Println(signature)
 	if !strings.HasPrefix(signature, signaturePrefix) {
@@ -151,15 +151,20 @@ func verifySignature(secret []byte, signature string, body []byte) bool {
 	}
 
 	actual := make([]byte, 20)
-	hex.Decode(actual, []byte(signature[5:]))
+	hex.Decode(actual, []byte(signature[7:]))
 
-	return hmac.Equal(signBody(secret, body), actual)
+	selfSigned := signBody(secret, body)
+
+	log.Println(fmt.Sprintf("%x", actual))
+	log.Println(fmt.Sprintf("%x", selfSigned))
+
+	return hmac.Equal(selfSigned, actual)
 }
 
 func signBody(secret, body []byte) []byte {
-	computed := hmac.New(sha1.New, secret)
+	computed := hmac.New(sha256.New, secret)
 	computed.Write(body)
-	return []byte(computed.Sum(nil))
+	return computed.Sum(nil)
 }
 
 func substr(s string, pos, length int) string {
