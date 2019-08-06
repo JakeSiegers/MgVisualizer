@@ -150,7 +150,7 @@ func verifySignature(secret []byte, signature string, body []byte) bool {
 		return false
 	}
 
-	actual := make([]byte, 20)
+	actual := make([]byte,hex.DecodedLen(len(signature[7:])))
 	hex.Decode(actual, []byte(signature[7:]))
 
 	selfSigned := signBody(secret, body)
