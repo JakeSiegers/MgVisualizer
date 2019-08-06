@@ -140,6 +140,8 @@ func httpHandler(response http.ResponseWriter, request *http.Request) {
 
 func isValidSignature(r *http.Request, key string) bool {
 	// Assuming a non-empty header
+	key = "1234"
+
 	gotHash := strings.SplitN(r.Header.Get("X-Hub-Signature"), "=", 2)
 	if gotHash[0] != "sha256" {
 		return false
@@ -159,7 +161,7 @@ func isValidSignature(r *http.Request, key string) bool {
 	}
 
 	expectedHash := hex.EncodeToString(hash.Sum(nil))
-	log.Println("GOT HASH:", gotHash)
+	log.Println("GOT HASH:", gotHash[1])
 	log.Println("EXPECTED HASH:", expectedHash)
 	return gotHash[1] == expectedHash
 }
