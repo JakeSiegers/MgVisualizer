@@ -108,26 +108,23 @@ func httpHandler(response http.ResponseWriter, request *http.Request) {
 		}
 		*/
 
-		signature := request.Header.Get("X-Hub-Signature")
-
+		log.Println(secret)
 		key := []byte(secret)
 		shaObj := hmac.New(sha256.New, key)
 		shaObj.Write(body)
 		hash := shaObj.Sum(nil)
-		stringHash := hex.EncodeToString(hash);
-		log.Printf("Looking For Hash: %s\n" + stringHash)
+		stringHash := hex.EncodeToString(hash)
+		log.Printf("Looking For Hash: %s\n" , stringHash)
 
-		if len(signature) > 7 {
-			foundHash := strings.SplitN(request.Header.Get("X-Hub-Signature"), "=", 2)[1]
-			log.Printf("Found Hash: %s\n", foundHash)
-			if foundHash == stringHash {
-				log.Println("Success!")
-				from := gjson.Get(string(body), "data.#.from_id")
-				for _, id := range from.Array() {
-					socketWatcher.broadcast <- id.String()
-				}
-				return
+		foundHash := strings.SplitN(request.Header.Get("X-Hub-Signature"), "=", 2)[1]
+		log.Printf("Found Hash: %s\n", foundHash)
+		if foundHash == stringHash {
+			log.Println("Success!")
+			from := gjson.Get(string(body), "data.#.from_id")
+			for _, id := range from.Array() {
+				socketWatcher.broadcast <- id.String()
 			}
+			return
 		}
 		log.Println("DENIED")
 		response.WriteHeader(http.StatusNotFound)
