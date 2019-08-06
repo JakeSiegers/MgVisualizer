@@ -145,8 +145,8 @@ func verifySignature(secret []byte, signature string, body []byte) bool {
 	const signaturePrefix = "sha1="
 	const signatureLength = 45 // len(SignaturePrefix) + len(hex(sha1))
 	log.Println(signature)
-	if len(signature) != signatureLength || !strings.HasPrefix(signature, signaturePrefix) {
-		log.Println("length prefix fail")
+	if !strings.HasPrefix(signature, signaturePrefix) {
+		log.Println("prefix fail")
 		return false
 	}
 
