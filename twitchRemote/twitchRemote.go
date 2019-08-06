@@ -114,11 +114,11 @@ func httpHandler(response http.ResponseWriter, request *http.Request) {
 		shaObj := hmac.New(sha256.New, key)
 		shaObj.Write(body)
 		hash := shaObj.Sum(nil)
-		stringHash := fmt.Sprintf("%x", hash)
+		stringHash := hex.EncodeToString(hash);
 		log.Printf("Looking For Hash: %s\n" + stringHash)
 
 		if len(signature) > 7 {
-			foundHash := strings.SplitN(request.Header.Get("X-Hub-Signature"), "=", 2)[0]
+			foundHash := strings.SplitN(request.Header.Get("X-Hub-Signature"), "=", 2)[1]
 			log.Printf("Found Hash: %s\n", foundHash)
 			if foundHash == stringHash {
 				log.Println("Success!")
