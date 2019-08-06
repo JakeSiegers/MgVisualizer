@@ -47,7 +47,7 @@ var (
 		},
 	}
 	socketWatcher *SocketWatcher
-	secret []byte
+	secret string
 )
 
 func main() {
@@ -55,10 +55,7 @@ func main() {
 	if err != nil {
 		fmt.Print(err)
 	}
-	secret = b
-	log.Println(b)
-	log.Println(string(b))
-	log.Println(string(secret))
+	secret = string(b)
 
 	socketWatcher = newSocketWatcher()
 	go socketWatcher.run()
@@ -99,9 +96,7 @@ func httpHandler(response http.ResponseWriter, request *http.Request) {
 		body, _ := ioutil.ReadAll(request.Body)
 		log.Println(string(body))
 
-		signature := request.Header.Get("X-Hub-Signature")
-
-		if !verifySignature(secret, signature, body) {
+		if !isValidSignature(request,secret) {
 			log.Println("DENIED")
 			response.WriteHeader(http.StatusNotFound)
 		}else{
@@ -143,38 +138,30 @@ func httpHandler(response http.ResponseWriter, request *http.Request) {
 	}
 }
 
-func verifySignature(secret []byte, signature string, body []byte) bool {
+func isValidSignature(r *http.Request, key string) bool {
+	// Assuming a non-empty header
+	gotHash := strings.SplitN(r.Header.Get("X-Hub-Signature"), "=", 2)
+	if gotHash[0] != "sha256" {
+		return false
+	}
+	defer r.Body.Close()
 
-	const signaturePrefix = "sha256="
-	const signatureLength = 45 // len(SignaturePrefix) + len(hex(sha1))
-	log.Println(signature)
-	if !strings.HasPrefix(signature, signaturePrefix) {
-		log.Println("prefix fail")
+	b, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		log.Printf("Cannot read the request body: %s\n", err)
 		return false
 	}
 
-	actual := make([]byte,hex.DecodedLen(len(signature[7:])))
-	hex.Decode(actual, []byte(signature[7:]))
-
-	computed := hmac.New(sha256.New, secret)
-	computed.Write(body)
-	selfSigned := computed.Sum(nil)
-
-	log.Println(string(secret))
-	log.Println(fmt.Sprintf("%x", secret))
-	log.Println(fmt.Sprintf("%x", actual))
-	log.Println(fmt.Sprintf("%x", selfSigned))
-
-	return hmac.Equal(selfSigned, actual)
-}
-
-func substr(s string, pos, length int) string {
-	runes := []rune(s)
-	l := pos + length
-	if l > len(runes) {
-		l = len(runes)
+	hash := hmac.New(sha256.New, []byte(key))
+	if _, err := hash.Write(b); err != nil {
+		log.Printf("Cannot compute the HMAC for request: %s\n", err)
+		return false
 	}
-	return string(runes[pos:l])
+
+	expectedHash := hex.EncodeToString(hash.Sum(nil))
+	log.Println("GOT HASH:", gotHash)
+	log.Println("EXPECTED HASH:", expectedHash)
+	return gotHash[1] == expectedHash
 }
 
 func (socketWatcher *SocketWatcher) run() {
