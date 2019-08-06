@@ -100,13 +100,13 @@ func httpHandler(response http.ResponseWriter, request *http.Request) {
 		shaObj := hmac.New(sha256.New, key)
 		shaObj.Write(body)
 		hash := shaObj.Sum(nil)
-		stringHash := fmt.Sprintf("%x", hash)
-		log.Println("Looking For Hash: " + stringHash)
+		//stringHash := fmt.Sprintf("%x", hash)
+		log.Printf("Looking For Hash: %s\n",hash)
 
 		if len(signature) > 7 {
 			foundHash := substr(signature, 7, len(signature))
 			log.Printf("Found Hash: %s\n", foundHash)
-			if foundHash == stringHash {
+			if foundHash == string(hash) {
 				log.Println("Success!")
 				from := gjson.Get(string(body), "data.#.from_id")
 				for _, id := range from.Array() {
