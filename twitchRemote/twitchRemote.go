@@ -95,7 +95,7 @@ func httpHandler(response http.ResponseWriter, request *http.Request) {
 		log.Println("POST REQUEST")
 		body, _ := ioutil.ReadAll(request.Body)
 		log.Println(string(body))
-
+		/*
 		if !isValidSignature(request,secret) {
 			log.Println("DENIED")
 			response.WriteHeader(http.StatusNotFound)
@@ -106,7 +106,8 @@ func httpHandler(response http.ResponseWriter, request *http.Request) {
 				socketWatcher.broadcast <- id.String()
 			}
 		}
-		/*
+		*/
+
 		signature := request.Header.Get("X-Hub-Signature")
 
 		key := []byte(secret)
@@ -117,7 +118,7 @@ func httpHandler(response http.ResponseWriter, request *http.Request) {
 		log.Printf("Looking For Hash: %s\n" + stringHash)
 
 		if len(signature) > 7 {
-			foundHash := substr(signature, 7, len(signature))
+			foundHash := strings.SplitN(request.Header.Get("X-Hub-Signature"), "=", 2)[0]
 			log.Printf("Found Hash: %s\n", foundHash)
 			if foundHash == stringHash {
 				log.Println("Success!")
@@ -130,7 +131,7 @@ func httpHandler(response http.ResponseWriter, request *http.Request) {
 		}
 		log.Println("DENIED")
 		response.WriteHeader(http.StatusNotFound)
-		 */
+
 		break
 	default:
 		log.Println("OTHER REQUEST")
@@ -140,7 +141,6 @@ func httpHandler(response http.ResponseWriter, request *http.Request) {
 
 func isValidSignature(r *http.Request, key string) bool {
 	// Assuming a non-empty header
-	key = "1234"
 
 	gotHash := strings.SplitN(r.Header.Get("X-Hub-Signature"), "=", 2)
 	if gotHash[0] != "sha256" {
@@ -163,7 +163,7 @@ func isValidSignature(r *http.Request, key string) bool {
 	expectedHash := hex.EncodeToString(hash.Sum(nil))
 	log.Println("GOT HASH:", gotHash[1])
 	log.Println("EXPECTED HASH:", expectedHash)
-	return true//gotHash[1] == expectedHash
+	return gotHash[1] == expectedHash
 }
 
 func (socketWatcher *SocketWatcher) run() {
