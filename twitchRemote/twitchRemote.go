@@ -153,18 +153,15 @@ func verifySignature(secret []byte, signature string, body []byte) bool {
 	actual := make([]byte,hex.DecodedLen(len(signature[7:])))
 	hex.Decode(actual, []byte(signature[7:]))
 
-	selfSigned := signBody(secret, body)
+	computed := hmac.New(sha256.New, secret)
+	computed.Write(body)
+	selfSigned := computed.Sum(nil)
 
+	log.Println(fmt.Sprintf("%x", secret))
 	log.Println(fmt.Sprintf("%x", actual))
 	log.Println(fmt.Sprintf("%x", selfSigned))
 
 	return hmac.Equal(selfSigned, actual)
-}
-
-func signBody(secret, body []byte) []byte {
-	computed := hmac.New(sha256.New, secret)
-	computed.Write(body)
-	return computed.Sum(nil)
 }
 
 func substr(s string, pos, length int) string {
