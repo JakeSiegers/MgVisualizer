@@ -56,6 +56,9 @@ func main() {
 		fmt.Print(err)
 	}
 	secret = b
+	log.Println(b)
+	log.Println(string(b))
+	log.Println(string(secret))
 
 	socketWatcher = newSocketWatcher()
 	go socketWatcher.run()
@@ -157,6 +160,7 @@ func verifySignature(secret []byte, signature string, body []byte) bool {
 	computed.Write(body)
 	selfSigned := computed.Sum(nil)
 
+	log.Println(string(secret))
 	log.Println(fmt.Sprintf("%x", secret))
 	log.Println(fmt.Sprintf("%x", actual))
 	log.Println(fmt.Sprintf("%x", selfSigned))
