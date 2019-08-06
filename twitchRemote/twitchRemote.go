@@ -47,7 +47,7 @@ var (
 		},
 	}
 	socketWatcher *SocketWatcher
-	secret        = ""
+	secret []byte
 )
 
 func main() {
@@ -55,7 +55,7 @@ func main() {
 	if err != nil {
 		fmt.Print(err)
 	}
-	secret = string(b)
+	secret = b
 
 	socketWatcher = newSocketWatcher()
 	go socketWatcher.run()
@@ -98,7 +98,7 @@ func httpHandler(response http.ResponseWriter, request *http.Request) {
 
 		signature := request.Header.Get("X-Hub-Signature")
 
-		if !verifySignature([]byte(secret), signature, body) {
+		if !verifySignature(secret, signature, body) {
 			log.Println("DENIED")
 			response.WriteHeader(http.StatusNotFound)
 		}else{
@@ -146,6 +146,7 @@ func verifySignature(secret []byte, signature string, body []byte) bool {
 	const signatureLength = 45 // len(SignaturePrefix) + len(hex(sha1))
 
 	if len(signature) != signatureLength || !strings.HasPrefix(signature, signaturePrefix) {
+		log.Println("length prefix fail")
 		return false
 	}
 
