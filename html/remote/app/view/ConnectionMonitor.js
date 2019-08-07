@@ -279,7 +279,7 @@ Ext.define('MG.view.ConnectionMonitor', {
 					to: 'stream',
 					action: 'notification',
 					text:reply.data[0].display_name+' Just Followed!',
-					time: 1500
+					time: 3000
 				});
 			}
 		});

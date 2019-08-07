@@ -65,7 +65,7 @@ class StreamTimer{
 		this.ctx.fillStyle = 'rgb(255,255,255)';
 		this.ctx.textBaseline= 'middle';
 		this.ctx.textAlign = 'center';
-		this.ctx.fillText(minutes+":"+seconds+"."+miliseconds,this.canvas.width-280,this.canvas.height-240+this.timerTweenYPos);
+		this.ctx.fillText(minutes+":"+seconds+"."+miliseconds,this.canvas.width-280,this.canvas.height-230+this.timerTweenYPos);
 		this.ctx.restore();
 	}
 }

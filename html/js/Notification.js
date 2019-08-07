@@ -5,45 +5,20 @@ class StreamNotification{
 		this.notificationActive = false;
 		this.notificationQueue = [];
 		this.currentText = 'You should not be reading this!';
-		this.scale = 0;
-		this.width = 480;
-		this.height = 30;
-		this.miniTickerMode = false;
 
+		this.miniTickerMode = false;
 		this.miniTicker = null;
 
-		this.frame = new PathDrawer({
-			ctx:this.ctx,
-			points:this.generatePath(),
-			fill:true,
-			drawX: this.canvas.width/2,
-			drawY: this.canvas.height/2-300,
-			lineWidth:2,
-			scale:this.scale
-		});
-		this.scrollPosition = 0;
-		this.scrollTween = new JakeTween({
+		this.notificationTweenYPos = -200;
+		this.notificationScrollPosition = 0;
+		this.notificationScrollTween = new JakeTween({
 			on:this,
-			to:{scrollPosition:1},
-			time:1000,
-			ease:JakeTween.easing.quadratic.inOut,
+			to:{notificationScrollPosition:1},
+			time:5000,
+			ease:JakeTween.easing.linear,
 			loop:true,
 			neverDestroy:true
-		});
-	}
-
-	generatePath(){
-		let tipWidth = (this.height/2);
-
-		return [
-			{x:tipWidth,y:0},
-			{x:0,y:this.height/2},
-			{x:tipWidth,y:this.height},
-			{x:this.width+tipWidth,y:this.height},
-			{x:this.width+tipWidth*2,y:this.height/2},
-			{x:this.width+tipWidth,y:0},
-			{x:tipWidth,y:0}
-		]
+		}).start();
 	}
 
 	displayNotification(message) {
@@ -62,16 +37,13 @@ class StreamNotification{
 			this.miniTicker.displayNotification(message);
 			return;
 		}
-		this.scale = 0;
-		this.scrollTween.stop();
-		this.scrollPosition = 0;
+
 		new JakeTween({
 			on:this,
-			to:{scale:1},
-			time:500,
+			to:{notificationTweenYPos:0},
+			time:1000,
 			ease:JakeTween.easing.exponential.out,
 			onComplete:function(){
-				this.scrollTween.setConfig({to:{scrollPosition:1},time:message.time/2}).start();
 				setTimeout(this.hideNotification.bind(this),message.time)
 			}
 		}).start();
@@ -80,8 +52,8 @@ class StreamNotification{
 	hideNotification(){
 		new JakeTween({
 			on:this,
-			to:{scale:0},
-			time:500,
+			to:{notificationTweenYPos:-200},
+			time:1000,
 			ease:JakeTween.easing.exponential.out,
 			onComplete:function(){
 				this.notificationActive = false;
@@ -93,30 +65,25 @@ class StreamNotification{
 	}
 
 	draw(){
-		if(!this.notificationActive){
+		if(!this.notificationActive) {
 			return;
 		}
+
 		this.ctx.save();
-		this.frame.setConfigs({
-			color:'rgba(0,0,0,0.5)',
-			strokeColor:'rgba(255,255,255,0.5)',
-			scale:this.scale,
-			fill:true,
-			stroke:true,
-		}).draw();
-		this.ctx.clip();
-		this.ctx.font = '20px "Press Start 2P"';
+		this.ctx.rotate(-0.1);
+		this.ctx.font = '400 50px Oswald';
 		this.ctx.fillStyle = 'rgb(255,255,255)';
 		this.ctx.textBaseline= 'middle';
-		let text = this.currentText;
-		let textWithSpacer = this.currentText+"  ";
-		if(this.ctx.measureText(text).width > this.width){
-			this.ctx.textAlign = 'left';
-			this.ctx.fillText(textWithSpacer+textWithSpacer, this.canvas.width/2-(this.width/2)-(this.ctx.measureText(textWithSpacer).width*this.scrollPosition),this.canvas.height/2 - 300);
-		}else {
-			this.ctx.textAlign = 'center';
-			this.ctx.fillText(text, this.canvas.width / 2, this.canvas.height / 2 - 300);
+		let notificationText = '';
+		let notificationTextLength = this.ctx.measureText(this.currentText).width;
+		this.notificationScrollTween.setConfig({time:10000+10*notificationTextLength});
+		let notificationTextCount = 0;
+		while(notificationTextLength < this.canvas.width*3  || notificationTextCount < 2) {
+			notificationTextCount++;
+			notificationText += this.currentText+'    ';
+			notificationTextLength = this.ctx.measureText(notificationText).width;
 		}
+		this.ctx.fillText(notificationText, -100-notificationTextLength/notificationTextCount*this.notificationScrollPosition, 400+this.notificationTweenYPos);
 		this.ctx.restore();
 	}
 }

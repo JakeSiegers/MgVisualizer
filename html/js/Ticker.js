@@ -37,7 +37,6 @@ class Ticker{
 			drawY: this.canvas.height/2+225,
 			lineWidth:2
 		});
-		this.primaryTextYPosition = this.canvas.height/2+225;
 		this.primaryText = 'SSF2 at Smash Con 2019';
 	}
 
@@ -142,7 +141,9 @@ class Ticker{
 			textLength = this.ctx.measureText(text).width;
 		}
 
-		this.ctx.fillText(text,-100-textLength/textCount*this.scrollPosition,this.canvas.height-350+this.tickerTweenYPos);
+		if(this.tickerTweenYPos < 300) {
+			this.ctx.fillText(text, -100 - textLength / textCount * this.scrollPosition, this.canvas.height - 350 + this.tickerTweenYPos);
+		}
 
 		if(this.displaySong.length > 0) {
 			let songText = '';
@@ -156,7 +157,7 @@ class Ticker{
 				songText += 'Song Name: '+this.displaySong+'    ';
 				songTextLength = this.ctx.measureText(songText).width;
 			}
-			this.ctx.fillText(songText, this.canvas.width+100+songTextLength/songTextCount*this.musicScrollPosition, this.canvas.height-290+this.musicTickerTweenYPos);
+			this.ctx.fillText(songText, this.canvas.width+100+songTextLength/songTextCount*this.musicScrollPosition, this.canvas.height-280+this.musicTickerTweenYPos);
 		}
 		this.ctx.restore();
 	}
