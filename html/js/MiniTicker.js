@@ -149,7 +149,7 @@ class MiniTicker{
 		this.ctx.font = '700 25px "Oswald"';
 		if(this.ctx.measureText(text).width > this.width-20){
 			this.ctx.textAlign = 'left';
-			this.ctx.fillText(textWithSpacer+textWithSpacer,this.x-(this.width/2)-(this.ctx.measureText(textWithSpacer).width*this.scrollPosition),this.primaryTextYPosition);
+			this.ctx.fillText(textWithSpacer+textWithSpacer+textWithSpacer,this.x-(this.width/2)-(this.ctx.measureText(textWithSpacer).width*this.scrollPosition),this.primaryTextYPosition);
 		}else {
 			this.ctx.textAlign = 'center';
 			this.ctx.fillText(text, this.x, this.primaryTextYPosition);
@@ -160,7 +160,7 @@ class MiniTicker{
 		this.ctx.font = '400 18px "Oswald"';
 		if (this.ctx.measureText(this.notificationText).width > this.width-20) {
 			this.ctx.textAlign = 'left';
-			this.ctx.fillText(notificationTextWithSpacer + notificationTextWithSpacer, this.x - (this.width / 2) - (this.ctx.measureText(notificationTextWithSpacer).width * this.scrollPosition), this.notificationYPosition);
+			this.ctx.fillText(notificationTextWithSpacer + notificationTextWithSpacer + notificationTextWithSpacer, this.x - (this.width / 2) - (this.ctx.measureText(notificationTextWithSpacer).width * this.scrollPosition), this.notificationYPosition);
 		} else {
 			this.ctx.textAlign = 'center';
 			this.ctx.fillText(this.notificationText, this.x, this.notificationYPosition);

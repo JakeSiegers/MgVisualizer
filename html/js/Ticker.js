@@ -64,8 +64,10 @@ class Ticker{
 			this.musicTextTween.destroy();
 		}
 		let newMusicPos = 300;
+		let ease = JakeTween.easing.back.in;
 		if(song.length > 0){
 			newMusicPos = 0;
+			ease = JakeTween.easing.back.out;
 			this.displaySong = this.song;
 
 		}
@@ -73,7 +75,7 @@ class Ticker{
 			on:this,
 			to:{musicTickerTweenYPos:newMusicPos},
 			time:1000,
-			ease:JakeTween.easing.exponential.out,
+			ease:ease,
 			onComplete:function(){
 				if(this.song === ''){
 					this.displaySong = '';
@@ -90,7 +92,7 @@ class Ticker{
 			on:this,
 			to:{tickerTweenYPos:0,musicTickerTweenYPos:0},
 			time:1000,
-			ease:JakeTween.easing.exponential.out
+			ease:JakeTween.easing.back.out
 		}).start();
 	}
 
@@ -102,7 +104,7 @@ class Ticker{
 			on:this,
 			to:{tickerTweenYPos:300,musicTickerTweenYPos:300},
 			time:1000,
-			ease:JakeTween.easing.exponential.out
+			ease:JakeTween.easing.back.in
 		}).start();
 	}
 

@@ -42,7 +42,7 @@ class StreamNotification{
 			on:this,
 			to:{notificationTweenYPos:0},
 			time:1000,
-			ease:JakeTween.easing.exponential.out,
+			ease:JakeTween.easing.back.out,
 			onComplete:function(){
 				setTimeout(this.hideNotification.bind(this),message.time)
 			}
@@ -54,7 +54,7 @@ class StreamNotification{
 			on:this,
 			to:{notificationTweenYPos:-200},
 			time:1000,
-			ease:JakeTween.easing.exponential.out,
+			ease:JakeTween.easing.back.in,
 			onComplete:function(){
 				this.notificationActive = false;
 				if(this.notificationQueue.length > 0){
