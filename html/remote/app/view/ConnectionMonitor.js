@@ -254,7 +254,16 @@ Ext.define('MG.view.ConnectionMonitor', {
 		if(!this.followBuffer){
 			this.followBuffer = [];
 		}
-		this.followBuffer.push(userId);
+		if(!this.duplicateBuffer){
+			this.duplicateBuffer = [];
+		}
+		if(this.duplicateBuffer.indexOf(userId) === -1) {
+			this.followBuffer.push(userId);
+		}
+		this.duplicateBuffer.push(userId);
+		if(this.duplicateBuffer.length > 50){
+			this.duplicateBuffer.shift();
+		}
 		this.processFollowBuffer();
 	},
 	processFollowBuffer:function(){
